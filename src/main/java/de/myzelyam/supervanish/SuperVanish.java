@@ -37,6 +37,9 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.github.Anon8281.universalScheduler.UniversalScheduler;
+import com.github.Anon8281.universalScheduler.scheduling.schedulers.TaskScheduler;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -79,10 +82,12 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
     @Getter
     private LayeredPermissionChecker layeredPermissionChecker;
     private Set<VanishPlayer> vanishPlayers = new HashSet<>();
+    private static TaskScheduler scheduler;
 
     @Override
     public void onEnable() {
         try {
+            scheduler = UniversalScheduler.getScheduler(this);
             useProtocolLib = getServer().getPluginManager().isPluginEnabled("ProtocolLib");
             if (!useProtocolLib) log(Level.INFO,
                     "Please install ProtocolLib to be able to use all SuperVanish features: " +
@@ -115,6 +120,10 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
         } catch (NoSuchMethodError ignored) {
             // API already loaded by other plugin
         }
+    }
+
+    public static TaskScheduler getScheduler() {
+      return scheduler;
     }
 
     @Override

@@ -9,19 +9,13 @@
 package de.myzelyam.supervanish;
 
 import de.myzelyam.supervanish.visibility.VanishStateMgr;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public interface SuperVanishPlugin {
-
     void log(Level level, String msg);
-
     void log(Level level, String msg, Throwable ex);
-
     Logger getLogger();
-
     void logException(Throwable e);
-
     VanishStateMgr getVanishStateMgr();
 }
