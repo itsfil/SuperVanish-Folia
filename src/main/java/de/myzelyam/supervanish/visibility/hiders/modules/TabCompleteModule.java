@@ -43,6 +43,8 @@ public class TabCompleteModule extends PacketAdapter {
 
     @Override
     public void onPacketSending(PacketEvent event) {
+        if (plugin.getVanishStateMgr().getOnlineVanishedPlayers().isEmpty()) return;
+
         try {
             if (plugin.getVersionUtil().isOneDotXOrHigher(13)) {
                 try {

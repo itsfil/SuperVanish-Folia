@@ -28,7 +28,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -96,10 +95,13 @@ public class VanishIndication extends Feature {
 
     @Override
     public void onEnable() {
+        if (!isActive()) return;
+        final SuperVanish svPlugin = plugin;
         ProtocolLibrary.getProtocolManager().addPacketListener(
-                new PacketAdapter(plugin, ListenerPriority.NORMAL, PacketType.Play.Server.PLAYER_INFO) {
+                new PacketAdapter(svPlugin, ListenerPriority.NORMAL, PacketType.Play.Server.PLAYER_INFO) {
                     @Override
                     public void onPacketSending(PacketEvent event) {
+                        if (svPlugin.getVanishStateMgr().getOnlineVanishedPlayers().isEmpty()) return;
                         try {
                             // multiple events share same packet object
                             event.setPacket(event.getPacket().shallowClone());

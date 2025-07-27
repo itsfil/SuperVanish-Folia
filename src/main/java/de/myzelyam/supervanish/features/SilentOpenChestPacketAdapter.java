@@ -40,6 +40,7 @@ public class SilentOpenChestPacketAdapter extends PacketAdapter {
 
     @Override
     public void onPacketSending(PacketEvent event) {
+        if (silentOpenChest.plugin.getVanishStateMgr().getOnlineVanishedPlayers().isEmpty()) return;
         try {
             Player receiver = event.getPlayer();
             if (receiver == null) return;

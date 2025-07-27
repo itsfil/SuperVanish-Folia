@@ -44,7 +44,7 @@ public class PlayerInfoModule extends PacketAdapter {
 
     @Override
     public void onPacketSending(PacketEvent event) {
-        // multiple events share same packet object
+        if (plugin.getVanishStateMgr().getOnlineVanishedPlayers().isEmpty()) return;
         event.setPacket(event.getPacket().shallowClone());
         try {
             List<PlayerInfoData> infoDataList = new ArrayList<>(event.getPacket().getPlayerInfoDataLists().read(0));
