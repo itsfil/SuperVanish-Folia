@@ -18,6 +18,7 @@ softdepend:
 - NametagEdit
 - MVdWPlaceholderAPI
 - Vault
+- OpenInv
 commands:
   sv:
     usage: /sv
