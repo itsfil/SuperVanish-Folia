@@ -19,8 +19,6 @@ import java.util.ConcurrentModificationException;
 import java.util.UUID;
 
 import be.maximvdw.placeholderapi.PlaceholderAPI;
-import be.maximvdw.placeholderapi.PlaceholderReplaceEvent;
-import be.maximvdw.placeholderapi.PlaceholderReplacer;
 
 
 public class MVdWPlaceholderAPIHook extends PluginHook {

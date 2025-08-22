@@ -19,6 +19,7 @@ softdepend:
 - MVdWPlaceholderAPI
 - Vault
 - OpenInv
+- InvSeePlusPlus
 commands:
   sv:
     usage: /sv

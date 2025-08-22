@@ -32,6 +32,6 @@ public abstract class Feature implements Listener {
     public abstract boolean isActive();
 
     protected void delay(Runnable runnable) {
-        plugin.getScheduler().runTaskLater(runnable, 1L);
+        SuperVanish.getScheduler().runTaskLater(runnable, 1L);
     }
 }

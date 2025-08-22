@@ -103,23 +103,19 @@ public class EssentialsHook extends PluginHook {
     public void onCommand(final PlayerCommandPreprocessEvent e) {
         if (!CommandAction.VANISH_SELF.checkPermission(e.getPlayer(), superVanish)) return;
         if (superVanish.getVanishStateMgr().isVanished(e.getPlayer().getUniqueId())) return;
-
-        String command = e.getMessage().toLowerCase(Locale.ENGLISH).split(" ")[0]
-                .replace("/", "");
-        if (command.contains(":")) {
-            command = command.split(":")[1];
-        }
-
+        String command = e.getMessage().toLowerCase(Locale.ENGLISH).split(" ")[0].replace("/", "")
+                .toLowerCase(Locale.ENGLISH);
+        if (command.split(":").length > 1) command = command.split(":")[1];
         if (command.equals("supervanish") || command.equals("sv")
                 || command.equals("v") || command.equals("vanish")) {
             final User user = essentials.getUser(e.getPlayer());
             if (user == null || !user.isAfk()) return;
             user.setHidden(true);
             preVanishHiddenPlayers.add(e.getPlayer().getUniqueId());
-            superVanish.getScheduler().runTaskLater(() -> {
-                if (preVanishHiddenPlayers.remove(e.getPlayer().getUniqueId())) {
-                    user.setHidden(false);
-                }
+            SuperVanish.getScheduler().runTaskLater(() -> {
+              if (preVanishHiddenPlayers.remove(e.getPlayer().getUniqueId())) {
+                user.setHidden(false);
+              }
             }, 1L);
         }
     }

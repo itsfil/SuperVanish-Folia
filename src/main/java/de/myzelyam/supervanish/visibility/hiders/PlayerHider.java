@@ -98,4 +98,8 @@ public abstract class PlayerHider implements Listener {
             }
         }, plugin);
     }
+
+    protected void runLater(Runnable runnable, long delay) {
+        SuperVanish.getScheduler().runTaskLater(runnable, delay);
+    }
 }

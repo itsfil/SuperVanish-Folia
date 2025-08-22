@@ -32,7 +32,7 @@ public class ActionBarMgr {
     }
 
     private void startTask() {
-        plugin.getScheduler().runTaskTimer(() -> {
+        SuperVanish.getScheduler().runTaskTimer(() -> {
           for (Player p : actionBars) {
             try {
               sendActionBar(p, plugin.replacePlaceholders(plugin.getMessage("ActionBarMessage"), p));

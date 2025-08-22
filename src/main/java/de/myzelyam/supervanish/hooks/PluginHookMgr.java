@@ -34,6 +34,7 @@ public class PluginHookMgr implements Listener {
         put("TrailGUI", TrailGUIHook.class);
         put("MVdWPlaceholderAPI", MVdWPlaceholderAPIHook.class);
         put("OpenInv", OpenInvHook.class);
+        put("InvSeePlusPlus", InvseePlusPlusHook.class);
     }};
     private final SuperVanish plugin;
     private Set<PluginHook> activeHooks = new HashSet<>();
@@ -46,6 +47,7 @@ public class PluginHookMgr implements Listener {
                 onPluginEnable(new PluginEnableEvent(alreadyEnabledPlugin));
     }
 
+    @SuppressWarnings({"deprecation"})
     @EventHandler
     public void onPluginEnable(PluginEnableEvent e) {
         Plugin plugin = e.getPlugin();

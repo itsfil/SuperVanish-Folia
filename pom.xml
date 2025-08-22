@@ -6,7 +6,7 @@
 
     <groupId>de.myzelyam</groupId>
     <artifactId>SuperVanish</artifactId>
-    <version>6.2.20</version>
+    <version>6.2.21</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -103,6 +103,14 @@
             <id>mvdw-software-repo</id>
             <name>MVdW Public Repositories</name>
             <url>https://repo.mvdw-software.com/content/groups/public/</url>
+        </repository>
+        <repository>
+            <id>jannyboy11-repsy</id>
+            <url>https://repo.repsy.io/mvn/jannyboy11/minecraft</url>
+        </repository>
+        <repository>
+            <id>github-jannyboy11-invseepp-repo</id>
+            <url>https://maven.pkg.github.com/Jannyboy11/InvSee-plus-plus</url>
         </repository>
     </repositories>
     <dependencies>
@@ -215,6 +223,13 @@
             <groupId>com.github.Jikoo</groupId>
             <artifactId>OpenInv</artifactId>
             <version>5.1.12</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- InvSee++ -->
+        <dependency>
+            <groupId>com.janboerman.invsee</groupId>
+            <artifactId>invsee-plus-plus_plugin</artifactId>
+            <version>0.30.5-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

@@ -35,6 +35,7 @@ public class PlaceholderAPIHook extends PluginHook {
         return PlaceholderAPI.setPlaceholders((OfflinePlayer) p, msg);
     }
 
+    @SuppressWarnings("deprecation")
     public class SVPlaceholderExpansion extends PlaceholderExpansion {
 
         @Override

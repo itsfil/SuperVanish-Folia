@@ -169,7 +169,9 @@ HookOptions:
   EnableCitizensHook: true
   # Should SV use OpenInv for opening chests silently?
   EnableOpenInvHook: true
-############# Compatibility Options ##############
+  # Should SV use InvSee++ for opening chests silently?
+  EnableInvSeePlusPlusHook: true
+  ############# Compatibility Options ##############
 CompatibilityOptions:
   # This section is for advanced users only!
   # The event priority which SuperVanish should use for the specific event.

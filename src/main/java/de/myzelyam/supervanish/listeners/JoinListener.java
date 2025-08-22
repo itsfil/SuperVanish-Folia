@@ -52,7 +52,12 @@ public class JoinListener implements EventExecutor, Listener {
                     }
                     // reminding message
                     if (plugin.getSettings().getBoolean("MessageOptions.RemindVanishedOnJoin")) {
-                        plugin.sendMessage(p, "RemindingMessage", p);
+                        SuperVanish.getScheduler().runTaskLater(() -> {
+                            if (plugin.getSettings().getBoolean("MessageOptions.RemindVanishedOnJoin")
+                                    && plugin.getVanishStateMgr().isVanished(p.getUniqueId())) {
+                                plugin.sendMessage(p, plugin.getMessage("RemindingMessage"), p);
+                            }
+                        }, 2L);
                     }
                     // re-add action bar
                     if (plugin.getActionBarMgr() != null && plugin.getSettings().getBoolean(

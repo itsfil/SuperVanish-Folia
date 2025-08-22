@@ -51,7 +51,7 @@ public class UpdateNotifier {
         Bukkit.getPluginManager().registerEvents(new Listener() {
             @EventHandler
             public void onJoin(final PlayerJoinEvent e) {
-                plugin.getScheduler().runTaskLater(() -> {
+                SuperVanish.getScheduler().runTaskLater(() -> {
                   if (!isUpToDate())
                     notifyPlayer(e.getPlayer());
                 }, 2L);
@@ -95,7 +95,7 @@ public class UpdateNotifier {
 
     private MyScheduledTask start() {
         if (checkTask != null) throw new IllegalStateException("Task is already running");
-        return plugin.getScheduler().runTaskTimerAsynchronously(() -> {
+        return SuperVanish.getScheduler().runTaskTimerAsynchronously(() -> {
           String latestVersion = fetchLatestVersion();
           UpdateNotifier.this.latestVersion = latestVersion.equals("Error")
             ? UpdateNotifier.this.latestVersion == null
@@ -103,7 +103,7 @@ public class UpdateNotifier {
             : UpdateNotifier.this.latestVersion
             : latestVersion;
           if (!isUpToDate())
-          plugin.getScheduler().runTask(() -> {
+          SuperVanish.getScheduler().runTask(() -> {
             notifyConsole();
             if (plugin.getSettings().getBoolean(
               "MiscellaneousOptions.UpdateChecker.NotifyAdmins")) notifyAdmins();
