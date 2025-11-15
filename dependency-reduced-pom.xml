@@ -40,12 +40,17 @@
               <artifactSet>
                 <includes>
                   <include>com.github.Anon8281:UniversalScheduler</include>
+                  <include>ca.spottedleaf:concurrentutil</include>
                 </includes>
               </artifactSet>
               <relocations>
                 <relocation>
                   <pattern>com.github.Anon8281.universalScheduler</pattern>
                   <shadedPattern>de.myzelyam.supervanish.universalScheduler</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>ca.spottedleaf.concurrentutil</pattern>
+                  <shadedPattern>de.myzelyam.supervanish.libs.concurrentutil</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>
@@ -106,7 +111,7 @@
     <dependency>
       <groupId>io.papermc.paper</groupId>
       <artifactId>paper-api</artifactId>
-      <version>1.21.7-R0.1-SNAPSHOT</version>
+      <version>1.21.8-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -128,9 +133,9 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>com.comphenix.protocol</groupId>
+      <groupId>net.dmulloy2</groupId>
       <artifactId>ProtocolLib</artifactId>
-      <version>5.1.0</version>
+      <version>5.4.0</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

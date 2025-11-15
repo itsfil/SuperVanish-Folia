@@ -18,7 +18,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import ca.spottedleaf.concurrentutil.map.SWMRHashTable;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -31,7 +31,7 @@ public class FeatureMgr {
             oneDotEightOrHigher = featureInfo -> featureInfo.getPlugin().getVersionUtil().isOneDotXOrHigher(8),
             oneDotSeventeenOrHigher = featureInfo -> featureInfo.getPlugin().getVersionUtil().isOneDotXOrHigher(17),
             supportedServer = featureInfo -> Bukkit.getServer().getName().equals("Paper") || Bukkit.getServer().getName().equals("Purpur");
-    private final Map<String, FeatureInfo> registeredFeatures = new HashMap<>();
+    private final Map<String, FeatureInfo> registeredFeatures = new SWMRHashTable<>();
     private final Set<Feature> activeFeatures = new HashSet<>();
     private final SuperVanish plugin;
 

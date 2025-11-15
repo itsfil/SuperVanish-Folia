@@ -22,7 +22,7 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-import java.util.HashMap;
+import ca.spottedleaf.concurrentutil.map.SWMRHashTable;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,7 +30,7 @@ public class NightVision extends Feature implements Runnable {
 
     public static final int INFINITE_POTION_EFFECT_LENGTH = 32767;
 
-    private final Map<UUID, PotionEffect> playerPreviousPotionEffectMap = new HashMap<>();
+    private final Map<UUID, PotionEffect> playerPreviousPotionEffectMap = new SWMRHashTable<>();
 
     public NightVision(SuperVanish plugin) {
         super(plugin);

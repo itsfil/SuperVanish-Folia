@@ -37,6 +37,7 @@ public class LoginListener implements Listener {
                     "PlayerData." + p.getUniqueId() + ".itemPickUps",
                     plugin.getSettings().getBoolean("InvisibilityFeatures.DefaultPickUpItemsOption"));
             plugin.createVanishPlayer(p, itemPickUps);
+            plugin.refreshCachedPermissionLevels(p);
             if (vanished && plugin.getSettings().getBoolean("VanishStateFeatures.CheckPermissionOnLogin", false)
                     && !CommandAction.VANISH_SELF.checkPermission(p, plugin)) {
                 vanished = false;
@@ -48,16 +49,22 @@ public class LoginListener implements Listener {
             }
             if (vanished) {
                 // hide self
-                for (Player onlinePlayer : Bukkit.getOnlinePlayers())
-                    if (!plugin.hasPermissionToSee(onlinePlayer, p))
+                final java.util.List<Player> snapshot1 = new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+                for (Player onlinePlayer : snapshot1) {
+                    if (!plugin.hasPermissionToSee(onlinePlayer, p)) {
                         plugin.getVisibilityChanger().getHider().setHidden(p, onlinePlayer, true);
+                    }
+                }
             }
 
             // hide others
-            for (Player onlinePlayer : Bukkit.getOnlinePlayers())
+            final java.util.List<Player> snapshot2 = new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+            for (Player onlinePlayer : snapshot2) {
                 if (plugin.getVanishStateMgr().isVanished(onlinePlayer.getUniqueId())
-                        && !plugin.hasPermissionToSee(p, onlinePlayer))
+                        && !plugin.hasPermissionToSee(p, onlinePlayer)) {
                     plugin.getVisibilityChanger().getHider().setHidden(onlinePlayer, p, true);
+                }
+            }
         } catch (Exception er) {
             plugin.logException(er);
         }

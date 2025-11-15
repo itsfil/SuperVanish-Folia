@@ -22,20 +22,18 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.*;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryView;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
+import ca.spottedleaf.concurrentutil.map.SWMRHashTable;
 import java.util.*;
 
 import static org.bukkit.Material.*;
 
 public class SilentOpenChest extends Feature {
 
-    private final Map<Player, StateInfo> playerStateInfoMap = new HashMap<>();
+    private final Map<UUID, StateInfo> playerStateInfoMap = new SWMRHashTable<>();
 
     private final Collection<Material> additionalChestMaterials;
 
@@ -44,8 +42,6 @@ public class SilentOpenChest extends Feature {
         additionalChestMaterials = new ArrayList<>();
         if (plugin.getVersionUtil().isOneDotXOrHigher(11)) {
             try {
-                //noinspection unused
-                InventoryType testInvType = InventoryType.SHULKER_BOX;
                 additionalChestMaterials.addAll(Arrays.asList(BLACK_SHULKER_BOX, BLUE_SHULKER_BOX, BROWN_SHULKER_BOX,
                         CYAN_SHULKER_BOX, GRAY_SHULKER_BOX, GREEN_SHULKER_BOX, LIGHT_BLUE_SHULKER_BOX,
                         LIME_SHULKER_BOX, MAGENTA_SHULKER_BOX, ORANGE_SHULKER_BOX, PINK_SHULKER_BOX,
@@ -73,10 +69,11 @@ public class SilentOpenChest extends Feature {
 
     @Override
     public void onDisable() {
-        for (Player p : playerStateInfoMap.keySet()) {
-            StateInfo stateInfo = playerStateInfoMap.remove(p);
+        for (UUID id : new ArrayList<>(playerStateInfoMap.keySet())) {
+            StateInfo stateInfo = playerStateInfoMap.remove(id);
             if (stateInfo == null) continue;
-            restoreState(stateInfo, p);
+            Player p = plugin.getServer().getPlayer(id);
+            if (p != null) restoreState(stateInfo, p);
         }
     }
 
@@ -86,7 +83,7 @@ public class SilentOpenChest extends Feature {
             return;
         Player p = (Player) e.getWhoClicked();
         if (!plugin.getVanishStateMgr().isVanished(p.getUniqueId())) return;
-        if (!playerStateInfoMap.containsKey(p)) return;
+        if (!playerStateInfoMap.containsKey(p.getUniqueId())) return;
         if (p.getGameMode() == GameMode.SPECTATOR) {
             e.setCancelled(false);
         }
@@ -95,16 +92,16 @@ public class SilentOpenChest extends Feature {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent e) {
         Player p = e.getPlayer();
-        StateInfo stateInfo = playerStateInfoMap.remove(p);
+        StateInfo stateInfo = playerStateInfoMap.remove(p.getUniqueId());
         if (stateInfo == null) return;
         restoreState(stateInfo, p);
-        playerStateInfoMap.remove(p);
+        playerStateInfoMap.remove(p.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onTeleport(PlayerTeleportEvent e) {
         Player p = e.getPlayer();
-        if (playerStateInfoMap.containsKey(p)
+        if (playerStateInfoMap.containsKey(p.getUniqueId())
                 && e.getCause() == PlayerTeleportEvent.TeleportCause.SPECTATE) {
             e.setCancelled(true);
         }
@@ -113,22 +110,23 @@ public class SilentOpenChest extends Feature {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onReappear(PlayerShowEvent e) {
         Player p = e.getPlayer();
-        StateInfo stateInfo = playerStateInfoMap.remove(p);
+        StateInfo stateInfo = playerStateInfoMap.remove(p.getUniqueId());
         if (stateInfo == null) return;
         p.closeInventory();
         restoreState(stateInfo, p);
-        playerStateInfoMap.remove(p);
+        playerStateInfoMap.remove(p.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onMove(PlayerMoveEvent e) {
         Player p = e.getPlayer();
-        if (playerStateInfoMap.containsKey(p)) {
+        UUID id = p.getUniqueId();
+        if (playerStateInfoMap.containsKey(id)) {
             Location loc = e.getTo() != null ? e.getTo() : e.getFrom();
-            if (playerStateInfoMap.get(p).openLoc.distance(loc) > .5) {
+            if (playerStateInfoMap.get(id).openLoc.distance(loc) > .5) {
                 p.closeInventory();
-                restoreState(playerStateInfoMap.get(p), p);
-                playerStateInfoMap.remove(p);
+                restoreState(playerStateInfoMap.get(id), p);
+                playerStateInfoMap.remove(id);
             }
         }
     }
@@ -136,7 +134,7 @@ public class SilentOpenChest extends Feature {
     @EventHandler(priority = EventPriority.HIGH)
     public void onGameModeChange(PlayerGameModeChangeEvent e) {
         Player p = e.getPlayer();
-        if (playerStateInfoMap.containsKey(p) && e.getNewGameMode() != GameMode.SPECTATOR) {
+        if (playerStateInfoMap.containsKey(p.getUniqueId()) && e.getNewGameMode() != GameMode.SPECTATOR) {
             // Don't let low-priority event listeners cancel the gamemode change
             if (e.isCancelled()) e.setCancelled(false);
         }
@@ -149,12 +147,13 @@ public class SilentOpenChest extends Feature {
                 || !p.hasPermission("sv.silentchest")) return;
         if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (p.getGameMode() == GameMode.SPECTATOR) return;
-        // Remember to keep "p.getItemInHand() != null" as we can't ensure that older Spigot versions will always return a non-null value
-        //noinspection deprecation,ConstantConditions
-        if (p.isSneaking() && p.getItemInHand() != null
-                && (p.getItemInHand().getType().isBlock() || p.getItemInHand().getType() == ITEM_FRAME)
-                && p.getItemInHand().getType() != Material.AIR)
-            return;
+        // Use modern main-hand API; ItemStack is never null on modern versions
+        if (p.isSneaking()) {
+            final Material handType = p.getInventory().getItemInMainHand().getType();
+            if (handType != Material.AIR && (handType.isBlock() || handType == ITEM_FRAME)) {
+                return;
+            }
+        }
         Block block = e.getClickedBlock();
         if (block == null) return;
         if (block.getType() == ENDER_CHEST) {
@@ -167,7 +166,7 @@ public class SilentOpenChest extends Feature {
             return;
         StateInfo stateInfo = StateInfo.extract(p);
         p.setVelocity(new Vector(0, 0, 0));
-        playerStateInfoMap.put(p, stateInfo);
+        playerStateInfoMap.put(p.getUniqueId(), stateInfo);
         p.setGameMode(GameMode.SPECTATOR);
     }
 
@@ -176,14 +175,15 @@ public class SilentOpenChest extends Feature {
         if (!(e.getPlayer() instanceof Player))
             return;
         final Player p = (Player) e.getPlayer();
-        if (!playerStateInfoMap.containsKey(p)) return;
+        final UUID id = p.getUniqueId();
+        if (!playerStateInfoMap.containsKey(id)) return;
         new BukkitRunnable() {
             @Override
             public void run() {
-                StateInfo stateInfo = playerStateInfoMap.get(p);
+                StateInfo stateInfo = playerStateInfoMap.get(id);
                 if (stateInfo == null) return;
                 restoreState(stateInfo, p);
-                playerStateInfoMap.remove(p);
+                playerStateInfoMap.remove(id);
             }
         }.runTaskLater(plugin, 1);
     }
@@ -206,24 +206,8 @@ public class SilentOpenChest extends Feature {
                 && !(plugin.getPluginHookMgr() != null && plugin.getPluginHookMgr().isHookActive(OpenInvHook.class));
     }
 
-    private boolean isShulkerBox(Inventory inv) {
-        try {
-            return inv.getType() == InventoryType.SHULKER_BOX;
-        } catch (NoSuchFieldError e) {
-            return false;
-        }
-    }
-
-    private boolean isShulkerBox(InventoryView inv) {
-        try {
-            return inv.getType() == InventoryType.SHULKER_BOX;
-        } catch (NoSuchFieldError e) {
-            return false;
-        }
-    }
-
     public boolean hasSilentlyOpenedChest(Player p) {
-        return playerStateInfoMap.containsKey(p);
+        return playerStateInfoMap.containsKey(p.getUniqueId());
     }
 
     @Override

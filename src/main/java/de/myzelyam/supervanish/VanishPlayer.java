@@ -48,6 +48,13 @@ public class VanishPlayer {
         return itemPickUps;
     }
 
+    public void refreshPermissionLevels(Player player) {
+        if (plugin.getSettings().getBoolean("IndicationFeatures.LayeredPermissions.LayeredSeeAndUsePermissions", false)) {
+            this.seePermissionLevel = plugin.getLayeredPermissionLevel(player, "see");
+            this.usePermissionLevel = plugin.getLayeredPermissionLevel(player, "use");
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

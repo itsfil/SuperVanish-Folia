@@ -71,11 +71,14 @@ public class VisibilityChanger {
             plugin.getVanishStateMgr().setVanishedState(player.getUniqueId(),
                     player.getName(), true, hiderName);
             // metadata
-            player.setMetadata("vanished", new FixedMetadataValue(plugin, true));
+            plugin.setVanishMetadata(player, true);
             // hide
-            for (Player onlinePlayer : Bukkit.getOnlinePlayers())
-                if (!plugin.hasPermissionToSee(onlinePlayer, player))
+            final java.util.List<Player> snapshot = new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+            for (Player onlinePlayer : snapshot) {
+                if (!plugin.hasPermissionToSee(onlinePlayer, player)) {
                     plugin.getVisibilityChanger().getHider().setHidden(player, onlinePlayer, true);
+                }
+            }
             // fly check
             if (config.getBoolean("InvisibilityFeatures.Fly.Enable")) {
                 player.setAllowFlight(true);
@@ -122,11 +125,14 @@ public class VisibilityChanger {
             if (e.isCancelled()) return;
             silent = e.isSilent();
             // metadata
-            player.removeMetadata("vanished", plugin);
+            plugin.setVanishMetadata(player, false);
             // show
-            for (Player onlinePlayer : Bukkit.getOnlinePlayers())
-                if (!plugin.hasPermissionToSee(onlinePlayer, player))
+            final java.util.List<Player> snapshot = new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+            for (Player onlinePlayer : snapshot) {
+                if (!plugin.hasPermissionToSee(onlinePlayer, player)) {
                     plugin.getVisibilityChanger().getHider().setHidden(player, onlinePlayer, false);
+                }
+            }
             // action bars
             if (plugin.getActionBarMgr() != null && config.getBoolean("MessageOptions.DisplayActionBar")) {
                 plugin.getActionBarMgr().removeActionBar(player);

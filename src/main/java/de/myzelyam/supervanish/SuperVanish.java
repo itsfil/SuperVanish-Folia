@@ -34,28 +34,36 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.github.Anon8281.universalScheduler.UniversalScheduler;
 import com.github.Anon8281.universalScheduler.scheduling.schedulers.TaskScheduler;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.UUID;
+import ca.spottedleaf.concurrentutil.map.SWMRHashTable;
 import java.util.logging.Level;
 
 public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
 
-    public static final String[] NON_REQUIRED_SETTINGS_UPDATES = {"6.0.0", "6.0.1", "6.0.2", "6.0.3",
-            "6.0.4", "6.0.5", "6.1.0", "6.1.1", "6.1.2", "6.1.3", "6.1.4", "6.1.5", "6.1.6", "6.1.7",
-            "6.1.8", "6.2.0", "6.2.1", "6.2.2", "6.2.3", "6.2.4", "6.2.5", "6.2.6", "6.2.7", "6.2.8",
-            "6.2.9", "6.2.10", "6.2.11", "6.2.12", "6.2.13", "6.2.14", "6.2.15", "6.2.16", "6.2.17",
-            "6.2.18", "6.2.19", "6.2.20"},
-            NON_REQUIRED_MESSAGES_UPDATES = {"6.0.0", "6.0.1", "6.0.2", "6.0.3", "6.0.4", "6.0.5", "6.1.0",
-                    "6.1.1", "6.1.2", "6.1.3", "6.1.4", "6.1.5", "6.1.6", "6.1.7", "6.1.8", "6.2.0", "6.2.1",
-                    "6.2.2", "6.2.3", "6.2.4", "6.2.5", "6.2.6", "6.2.7", "6.2.8", "6.2.9", "6.2.10", "6.2.11",
-                    "6.2.12", "6.2.13", "6.2.14", "6.2.15", "6.2.16", "6.2.17", "6.2.18", "6.2.19", "6.2.20"};
+    // Versions that don't require config updates (consolidated for memory efficiency)
+    public static final String[] NON_REQUIRED_SETTINGS_UPDATES = {
+            "6.0.0", "6.0.1", "6.0.2", "6.0.3", "6.0.4", "6.0.5",
+            "6.1.0", "6.1.1", "6.1.2", "6.1.3", "6.1.4", "6.1.5", "6.1.6", "6.1.7", "6.1.8",
+            "6.2.0", "6.2.1", "6.2.2", "6.2.3", "6.2.4", "6.2.5", "6.2.6", "6.2.7", "6.2.8",
+            "6.2.9", "6.2.10", "6.2.11", "6.2.12", "6.2.13", "6.2.14", "6.2.15", "6.2.16",
+            "6.2.17", "6.2.18", "6.2.19", "6.2.20", "6.2.21"
+    };
+    public static final String[] NON_REQUIRED_MESSAGES_UPDATES = {
+            "6.0.0", "6.0.1", "6.0.2", "6.0.3", "6.0.4", "6.0.5",
+            "6.1.0", "6.1.1", "6.1.2", "6.1.3", "6.1.4", "6.1.5", "6.1.6", "6.1.7", "6.1.8",
+            "6.2.0", "6.2.1", "6.2.2", "6.2.3", "6.2.4", "6.2.5", "6.2.6", "6.2.7", "6.2.8",
+            "6.2.9", "6.2.10", "6.2.11", "6.2.12", "6.2.13", "6.2.14", "6.2.15", "6.2.16",
+            "6.2.17", "6.2.18", "6.2.19", "6.2.20", "6.2.21"
+    };
 
     @Getter
     private boolean useProtocolLib;
@@ -83,7 +91,7 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
     private LayeredPermissionChecker layeredPermissionChecker;
     @Getter
     private PluginHookMgr pluginHookMgr;
-    private Set<VanishPlayer> vanishPlayers = new HashSet<>();
+    private final Map<UUID, VanishPlayer> vanishPlayers = new SWMRHashTable<>();
     private static TaskScheduler scheduler;
 
     @Override
@@ -132,6 +140,9 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
     public void onDisable() {
         try {
             if (featureMgr != null) featureMgr.disableFeatures();
+            if (visibilityChanger != null && visibilityChanger.getHider() != null) {
+                visibilityChanger.getHider().clearAll();
+            }
             vanishPlayers.clear();
             VanishAPI.setPlugin(null);
         } catch (Throwable e) {
@@ -143,14 +154,13 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
     }
 
     private void onReload() {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            boolean itemPickUps = getPlayerData().getBoolean(
-                    "PlayerData." + player.getUniqueId() + ".itemPickUps",
-                    getSettings().getBoolean("InvisibilityFeatures.DefaultPickUpItemsOption"));
+        final java.util.List<Player> players = new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+        for (Player player : players) {
+            boolean itemPickUps = getDefaultItemPickups(player);
             boolean vanished = vanishStateMgr.isVanished(player.getUniqueId());
             createVanishPlayer(player, itemPickUps);
             if (vanished) {
-                for (Player onlinePlayer : Bukkit.getOnlinePlayers())
+                for (Player onlinePlayer : players)
                     if (!hasPermissionToSee(onlinePlayer, player))
                         visibilityChanger.getHider().setHidden(player, onlinePlayer, true);
             }
@@ -224,27 +234,30 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
     }
 
     public VanishPlayer getVanishPlayer(Player player) {
-        for (VanishPlayer vanishPlayer : vanishPlayers) {
-            if (vanishPlayer.getPlayerUUID().equals(player.getUniqueId())) {
-                return vanishPlayer;
-            }
+        UUID id = player.getUniqueId();
+        VanishPlayer vp = vanishPlayers.get(id);
+        if (vp == null) {
+            vp = new VanishPlayer(player, this, getDefaultItemPickups(player));
+            vanishPlayers.put(id, vp);
         }
-        // ensure that there is always a vanish player
-        boolean itemPickUps = getPlayerData().getBoolean(
-                "PlayerData." + player.getUniqueId() + ".itemPickUps",
-                getSettings().getBoolean("InvisibilityFeatures.DefaultPickUpItemsOption"));
-        final VanishPlayer vanishPlayer = new VanishPlayer(player, this, itemPickUps);
-        vanishPlayers.add(vanishPlayer);
-        return vanishPlayer;
+        return vp;
     }
 
-    public void createVanishPlayer(Player player, boolean itemPickUps) {
-        VanishPlayer vanishPlayer = new VanishPlayer(player, this, itemPickUps);
-        vanishPlayers.add(vanishPlayer);
+    public VanishPlayer createVanishPlayer(Player player, boolean itemPickUps) {
+        UUID id = player.getUniqueId();
+        VanishPlayer vp = new VanishPlayer(player, this, itemPickUps);
+        vanishPlayers.put(id, vp);
+        return vp;
+    }
+
+    private boolean getDefaultItemPickups(Player player) {
+        return getPlayerData().getBoolean(
+                "PlayerData." + player.getUniqueId() + ".itemPickUps",
+                getSettings().getBoolean("InvisibilityFeatures.DefaultPickUpItemsOption"));
     }
 
     public void removeVanishPlayer(VanishPlayer vanishPlayer) {
-        vanishPlayers.remove(vanishPlayer);
+        if (vanishPlayer != null) vanishPlayers.remove(vanishPlayer.getPlayerUUID());
     }
 
     public void sendMessage(CommandSender p, String messagesYmlPath, Object... additionalPlayerInfo) {
@@ -272,6 +285,22 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
 
     public int getLayeredPermissionLevel(CommandSender sender, String permission) {
         return layeredPermissionChecker.getLayeredPermissionLevel(sender, permission);
+    }
+
+    public void refreshCachedPermissionLevels(Player player) {
+        try {
+            if (player == null) return;
+            VanishPlayer vp = getVanishPlayer(player);
+            if (vp != null) vp.refreshPermissionLevels(player);
+        } catch (Exception e) {
+            logException(e);
+        }
+    }
+
+    public void refreshCachedPermissionLevelsAll() {
+        for (Player p : getServer().getOnlinePlayers()) {
+            refreshCachedPermissionLevels(p);
+        }
     }
 
     public FileConfiguration getSettings() {
@@ -304,5 +333,13 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
     @Override
     public void logException(Throwable e) {
         ExceptionLogger.logException(e, this);
+    }
+
+    public void setVanishMetadata(Player player, boolean vanished) {
+        if (vanished) {
+            player.setMetadata("vanished", new FixedMetadataValue(this, true));
+        } else {
+            player.removeMetadata("vanished", this);
+        }
     }
 }

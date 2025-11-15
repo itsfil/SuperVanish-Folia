@@ -53,7 +53,8 @@ public class VanishIndication extends Feature {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onVanish(PostPlayerHideEvent e) {
         Player p = e.getPlayer();
-        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+        final java.util.List<Player> snapshot = new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+        for (Player onlinePlayer : snapshot) {
             if (!plugin.getVisibilityChanger().getHider().isHidden(p, onlinePlayer) && p != onlinePlayer) {
                 sendPlayerInfoChangeGameModePacket(onlinePlayer, p, true);
             }
@@ -63,7 +64,8 @@ public class VanishIndication extends Feature {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onReappear(PlayerShowEvent e) {
         final Player p = e.getPlayer();
-        for (final Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+        final java.util.List<Player> snapshot = new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+        for (final Player onlinePlayer : snapshot) {
             if (!plugin.getVisibilityChanger().getHider().isHidden(p, onlinePlayer) && p != onlinePlayer) {
                 delay(() -> sendPlayerInfoChangeGameModePacket(onlinePlayer, p, false));
             }
@@ -76,14 +78,14 @@ public class VanishIndication extends Feature {
         delay(() -> {
             // tell others that p is a spectator
             if (plugin.getVanishStateMgr().isVanished(p.getUniqueId()))
-                for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                for (Player onlinePlayer : new java.util.ArrayList<>(Bukkit.getOnlinePlayers())) {
                     if (!plugin.getVisibilityChanger().getHider().isHidden(p, onlinePlayer)
                             && p != onlinePlayer) {
                         sendPlayerInfoChangeGameModePacket(onlinePlayer, p, true);
                     }
                 }
             // tell p that others are spectators
-            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            for (Player onlinePlayer : new java.util.ArrayList<>(Bukkit.getOnlinePlayers())) {
                 if (!plugin.getVanishStateMgr().isVanished(onlinePlayer.getUniqueId())) continue;
                 if (!plugin.getVisibilityChanger().getHider().isHidden(onlinePlayer, p)
                         && p != onlinePlayer) {

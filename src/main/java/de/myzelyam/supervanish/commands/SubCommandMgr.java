@@ -22,7 +22,7 @@ import java.util.Locale;
 
 public class SubCommandMgr {
 
-    private SuperVanish plugin;
+    private final SuperVanish plugin;
 
     public SubCommandMgr(SuperVanish plugin) {
         this.plugin = plugin;
@@ -80,6 +80,9 @@ public class SubCommandMgr {
                     || args[0].equalsIgnoreCase("dumpstacktrace")
                     || args[0].equalsIgnoreCase("stacktrace")) {
                 executable = new PrintStacktrace(plugin);
+            }
+            if (args[0].equalsIgnoreCase("refreshperms")) {
+                executable = new RefreshPerms(plugin);
             }
             if (args[0].equalsIgnoreCase("toggleitempickups")
                     || args[0].equalsIgnoreCase("toggleitempickup")

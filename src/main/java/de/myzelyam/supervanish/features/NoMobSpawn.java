@@ -59,34 +59,17 @@ public class NoMobSpawn extends Feature {
 
     @EventHandler
     public void onEntitySpawnerSpawn(PreSpawnerSpawnEvent e) {
-        try {
-            // First check if a non-spectator vanished player is in range
-            boolean vanishedPlayerInRange = false;
-            for (UUID vanishedUUID : plugin.getVanishStateMgr().getOnlineVanishedPlayers()) {
-                Player p = Bukkit.getPlayer(vanishedUUID);
-                if (p == null) continue;
-                if (p.getWorld().equals(e.getSpawnerLocation().getWorld()) &&
-                        p.getLocation().distanceSquared(e.getSpawnerLocation()) <= 256 &&
-                        p.getGameMode() != GameMode.SPECTATOR)
-                    vanishedPlayerInRange = true;
-            }
-            if (!vanishedPlayerInRange) return;
+        final var world = e.getSpawnerLocation().getWorld();
+        boolean vanishedNearby = !world.getNearbyPlayers(e.getSpawnerLocation(), 16.0, p ->
+            p.getGameMode() != GameMode.SPECTATOR && plugin.getVanishStateMgr().isVanished(p.getUniqueId())
+        ).isEmpty();
+        if (!vanishedNearby) return;
+        boolean visibleNearby = !world.getNearbyPlayers(e.getSpawnerLocation(), 16.0, p ->
+            p.getGameMode() != GameMode.SPECTATOR && !plugin.getVanishStateMgr().isVanished(p.getUniqueId())
+        ).isEmpty();
+        if (visibleNearby) return;
 
-            // If so, only cancel if no non-vanished player is in range
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                if (p.getWorld().equals(e.getSpawnerLocation().getWorld()) &&
-                        p.getLocation().distanceSquared(e.getSpawnerLocation()) <= 256 &&
-                        p.getGameMode() != GameMode.SPECTATOR &&
-                        !plugin.getVanishStateMgr().isVanished(p.getUniqueId()))
-                    return;
-            }
-            e.setCancelled(true);
-        } catch (Exception er) {
-            if (!suppressErrors) {
-                plugin.logException(er);
-                suppressErrors = true;
-            }
-        }
+        e.setCancelled(true);
     }
 
     @Override

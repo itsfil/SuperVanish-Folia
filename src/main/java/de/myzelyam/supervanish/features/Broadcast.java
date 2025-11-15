@@ -24,7 +24,8 @@ public class Broadcast extends Feature {
 
     public static void announceSilentJoin(Player vanished, SuperVanish plugin) {
         if (plugin.getSettings().getBoolean("MessageOptions.AnnounceRealJoinQuitToAdmins", true)) {
-            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            final java.util.List<Player> snapshot = new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+            for (Player onlinePlayer : snapshot) {
                 if (vanished == onlinePlayer)
                     continue;
                 if (plugin.canSee(onlinePlayer, vanished)) {
@@ -36,7 +37,8 @@ public class Broadcast extends Feature {
 
     public static void announceSilentDeath(Player p, SuperVanish plugin, String deathMessage) {
         if (plugin.getSettings().getBoolean("MessageOptions.AnnounceDeathToAdmins", true)) {
-            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            final java.util.List<Player> snapshot = new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+            for (Player onlinePlayer : snapshot) {
                 if (p == onlinePlayer)
                     continue;
                 if (plugin.canSee(onlinePlayer, p)) {
@@ -50,7 +52,8 @@ public class Broadcast extends Feature {
 
     public static void announceSilentQuit(Player p, SuperVanish plugin) {
         if (plugin.getSettings().getBoolean("MessageOptions.AnnounceRealJoinQuitToAdmins", true)) {
-            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            final java.util.List<Player> snapshot = new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+            for (Player onlinePlayer : snapshot) {
                 if (p == onlinePlayer)
                     continue;
                 if (plugin.canSee(onlinePlayer, p)) {
@@ -72,7 +75,8 @@ public class Broadcast extends Feature {
         final Player p = e.getPlayer();
         if (plugin.getSettings().getBoolean("MessageOptions.FakeJoinQuitMessages.BroadcastFakeQuitOnVanish")
                 && !e.isSilent()) {
-            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            final java.util.List<Player> snapshot = new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+            for (Player onlinePlayer : snapshot) {
                 if (!plugin.canSee(onlinePlayer, p)) {
                     if (!plugin.getSettings().getBoolean(
                             "MessageOptions.FakeJoinQuitMessages.SendMessageOnlyToAdmins"))
@@ -96,7 +100,8 @@ public class Broadcast extends Feature {
         Player p = e.getPlayer();
         if (plugin.getSettings().getBoolean(
                 "MessageOptions.FakeJoinQuitMessages.BroadcastFakeJoinOnReappear") && !e.isSilent()) {
-            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            final java.util.List<Player> snapshot = new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+            for (Player onlinePlayer : snapshot) {
                 if (!plugin.canSee(onlinePlayer, p)) {
                     if (!plugin.getSettings().getBoolean(
                             "MessageOptions.FakeJoinQuitMessages.SendMessageOnlyToAdmins"))

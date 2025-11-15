@@ -11,7 +11,7 @@ package de.myzelyam.supervanish.config;
 import de.myzelyam.supervanish.SuperVanish;
 import de.myzelyam.supervanish.SuperVanishPlugin;
 
-import java.util.HashMap;
+import ca.spottedleaf.concurrentutil.map.SWMRHashTable;
 import java.util.Map;
 
 public class FileMgr {
@@ -21,7 +21,7 @@ public class FileMgr {
 
     public FileMgr(SuperVanishPlugin plugin) {
         this.plugin = plugin;
-        files = new HashMap<>();
+        files = new SWMRHashTable<>();
     }
 
     public PluginFile<?> addFile(String name, FileType type) {

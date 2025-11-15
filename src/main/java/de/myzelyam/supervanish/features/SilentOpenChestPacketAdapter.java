@@ -82,7 +82,7 @@ public class SilentOpenChestPacketAdapter extends PacketAdapter {
                     try {
                         if (event.getPacket().getIntegers().read(0) != 3) return;
                     } catch (FieldAccessException e) {
-                        // TODO
+                        return;
                     }
                     if (!silentOpenChest.hasSilentlyOpenedChest(receiver)) return;
                     event.setCancelled(true);

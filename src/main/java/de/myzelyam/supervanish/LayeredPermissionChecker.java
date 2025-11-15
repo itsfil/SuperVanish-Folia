@@ -63,10 +63,11 @@ public class LayeredPermissionChecker {
         if (!enableSeePermission && permission.equalsIgnoreCase("see"))
             return 0;
         int maxLevel = settings.getInt("IndicationFeatures.LayeredPermissions.MaxLevel", 100);
-        int level = sender.hasPermission("sv." + permission) ? 1 : 0;
-        for (int i = 1; i <= maxLevel; i++)
+        if (sender.hasPermission("sv." + permission + ".level" + maxLevel)) return maxLevel;
+        for (int i = maxLevel - 1; i >= 2; i--) {
             if (sender.hasPermission("sv." + permission + ".level" + i))
-                level = i;
-        return level;
+                return i;
+        }
+        return sender.hasPermission("sv." + permission) ? 1 : 0;
     }
 }

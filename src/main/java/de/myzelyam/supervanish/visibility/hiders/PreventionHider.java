@@ -52,14 +52,10 @@ public class PreventionHider extends PlayerHider implements Runnable {
 
     @Override
     public void run() {
-        for (Player hidden : playerHiddenFromPlayersMap.keySet()) {
-            if (BukkitPlayerHidingUtil.isNewPlayerHidingAPISupported(plugin)) {
-                plugin.getServer().getScheduler().cancelTask(taskId);
-                return;
-            }
-            for (Player viewer : playerHiddenFromPlayersMap.get(hidden)) {
-                BukkitPlayerHidingUtil.hidePlayer(hidden, viewer, plugin);
-            }
+        if (BukkitPlayerHidingUtil.isNewPlayerHidingAPISupported(plugin)) {
+            plugin.getServer().getScheduler().cancelTask(taskId);
+            return;
         }
+        forEachHiddenPair((hidden, viewer) -> BukkitPlayerHidingUtil.hidePlayer(hidden, viewer, plugin));
     }
 }

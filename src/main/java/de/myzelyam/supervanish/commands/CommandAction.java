@@ -77,11 +77,16 @@ public enum CommandAction {
             true,
             "/sv reload",
             "Reloads all settings and messages"),
-    PRINT_STACKTRACE(
+        PRINT_STACKTRACE(
             "sv.stacktrace",
             true,
             "/sv stacktrace",
             "Logs info for a bug report"),
+        REFRESH_PERMS(
+            "sv.refreshperms",
+            true,
+            "/sv refreshperms",
+            "Refreshes cached layered permission levels"),
     SHOW_HELP(
             "sv.help",
             true,
@@ -117,6 +122,8 @@ public enum CommandAction {
             list.add("tipu");
         if (PRINT_STACKTRACE.checkPermission(sender, plugin))
             list.add("stacktrace");
+        if (REFRESH_PERMS.checkPermission(sender, plugin))
+            list.add("refreshperms");
         return list;
     }
 

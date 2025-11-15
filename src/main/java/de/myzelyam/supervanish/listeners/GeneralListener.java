@@ -12,6 +12,7 @@ import de.myzelyam.supervanish.SuperVanish;
 import de.myzelyam.supervanish.VanishPlayer;
 import de.myzelyam.supervanish.features.Broadcast;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -19,7 +20,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerPickupItemEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 
 
 public class GeneralListener implements Listener {
@@ -27,21 +28,31 @@ public class GeneralListener implements Listener {
     private final SuperVanish plugin;
 
     private final FileConfiguration config;
+    private final boolean preventHittingEntities;
+    private final boolean disableHunger;
+    private final boolean disableDamage;
+    private final boolean disableMobTarget;
+    private final boolean preventModifyOwnInv;
 
     public GeneralListener(SuperVanish plugin) {
         this.plugin = plugin;
         config = plugin.getSettings();
+        preventHittingEntities = config.getBoolean("RestrictiveOptions.PreventHittingEntities");
+        disableHunger = config.getBoolean("InvisibilityFeatures.DisableHunger");
+        disableDamage = config.getBoolean("InvisibilityFeatures.DisableDamage");
+        disableMobTarget = config.getBoolean("InvisibilityFeatures.DisableMobTarget");
+        preventModifyOwnInv = config.getBoolean("RestrictiveOptions.PreventModifyingOwnInventory");
     }
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onDamage(EntityDamageByEntityEvent e) {
         try {
             if (!(e.getDamager() instanceof Player)) return;
+            if (!preventHittingEntities) return;
             if (e.getEntity() == null) return;
             Player p = (Player) e.getDamager();
             if (plugin.getVanishStateMgr().isVanished(p.getUniqueId())) {
-                if (config.getBoolean("RestrictiveOptions.PreventHittingEntities")
-                        && !p.hasPermission("sv.damageentities") && !p.hasPermission("sv.damage")) {
+                if (!p.hasPermission("sv.damageentities") && !p.hasPermission("sv.damage")) {
                     plugin.sendMessage(p, "EntityHitDenied", p);
                     e.setCancelled(true);
                 }
@@ -69,7 +80,7 @@ public class GeneralListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onFoodLevelChange(FoodLevelChangeEvent e) {
         try {
-            if (e.getEntity() instanceof Player && config.getBoolean("InvisibilityFeatures.DisableHunger")) {
+            if (e.getEntity() instanceof Player && disableHunger) {
                 Player p = (Player) e.getEntity();
                 if (plugin.getVanishStateMgr().isVanished(p.getUniqueId())
                         && e.getFoodLevel() <= p.getFoodLevel())
@@ -85,7 +96,7 @@ public class GeneralListener implements Listener {
         try {
             if (!(e.getEntity() instanceof Player)) return;
             Player p = (Player) e.getEntity();
-            if (!config.getBoolean("InvisibilityFeatures.DisableDamage")) return;
+            if (!disableDamage) return;
             if (plugin.getVanishStateMgr().isVanished(p.getUniqueId())) {
                 e.setCancelled(true);
             }
@@ -98,7 +109,7 @@ public class GeneralListener implements Listener {
     public void onTarget(EntityTargetEvent e) {
         try {
             if (!(e.getTarget() instanceof Player)) return;
-            if (!config.getBoolean("InvisibilityFeatures.DisableMobTarget")) return;
+            if (!disableMobTarget) return;
             Player p = (Player) e.getTarget();
             if (plugin.getVanishStateMgr().isVanished(p.getUniqueId())) {
                 e.setCancelled(true);
@@ -109,14 +120,15 @@ public class GeneralListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGH)
-    public void onItemPickUp(PlayerPickupItemEvent e) {
+    public void onItemPickUp(EntityPickupItemEvent e) {
         try {
-            VanishPlayer vanishPlayer = plugin.getVanishPlayer(e.getPlayer());
+            if (!(e.getEntity() instanceof Player)) return;
+            Player player = (Player) e.getEntity();
+            VanishPlayer vanishPlayer = plugin.getVanishPlayer(player);
             if (vanishPlayer == null || !vanishPlayer.isOnlineVanished()) return;
             if (!vanishPlayer.hasItemPickUpsEnabled())
                 e.setCancelled(true);
-            if (plugin.getSettings().getBoolean("RestrictiveOptions.PreventModifyingOwnInventory")
-                    && !e.getPlayer().hasPermission("sv.modifyowninv")) {
+            if (preventModifyOwnInv && !player.hasPermission("sv.modifyowninv")) {
                 e.setCancelled(true);
             }
         } catch (Exception er) {
@@ -129,7 +141,7 @@ public class GeneralListener implements Listener {
         try {
             if (!plugin.getVanishStateMgr().isVanished(e.getPlayer().getUniqueId())) return;
             if (e.getAction() != Action.PHYSICAL) return;
-            if (e.getClickedBlock() != null && e.getClickedBlock().getType().toString().matches("SOIL|FARMLAND"))
+            if (e.getClickedBlock() != null && e.getClickedBlock().getType() == Material.FARMLAND)
                 e.setCancelled(true);
         } catch (Exception er) {
             plugin.logException(er);

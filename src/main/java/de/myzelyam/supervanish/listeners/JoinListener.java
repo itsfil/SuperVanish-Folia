@@ -35,16 +35,22 @@ public class JoinListener implements EventExecutor, Listener {
                 PlayerJoinEvent e = (PlayerJoinEvent) event;
                 final Player p = e.getPlayer();
                 // hide others
-                for (Player onlinePlayer : Bukkit.getOnlinePlayers())
+                final java.util.List<Player> snapshot1 = new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+                for (Player onlinePlayer : snapshot1) {
                     if (plugin.getVanishStateMgr().isVanished(onlinePlayer.getUniqueId())
-                            && !plugin.hasPermissionToSee(p, onlinePlayer))
+                            && !plugin.hasPermissionToSee(p, onlinePlayer)) {
                         plugin.getVisibilityChanger().getHider().setHidden(onlinePlayer, p, true);
+                    }
+                }
                 // vanished:
                 if (plugin.getVanishStateMgr().isVanished(p.getUniqueId())) {
                     // hide self
-                    for (Player onlinePlayer : Bukkit.getOnlinePlayers())
-                        if (!plugin.hasPermissionToSee(onlinePlayer, p))
+                    final java.util.List<Player> snapshot2 = new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+                    for (Player onlinePlayer : snapshot2) {
+                        if (!plugin.hasPermissionToSee(onlinePlayer, p)) {
                             plugin.getVisibilityChanger().getHider().setHidden(p, onlinePlayer, true);
+                        }
+                    }
                     // Join message
                     if (plugin.getSettings().getBoolean("MessageOptions.HideRealJoinQuitMessages")) {
                         e.setJoinMessage(null);
@@ -71,11 +77,11 @@ public class JoinListener implements EventExecutor, Listener {
                         p.setAllowFlight(true);
                     }
                     // metadata
-                    p.setMetadata("vanished", new FixedMetadataValue(plugin, true));
+                    plugin.setVanishMetadata(p, true);
                 } else {
                     // not vanished:
                     // metadata
-                    p.removeMetadata("vanished", plugin);
+                    plugin.setVanishMetadata(p, false);
                 }
                 // not necessarily vanished:
                 // recreate files msg
@@ -87,7 +93,7 @@ public class JoinListener implements EventExecutor, Listener {
                             plugin.getPlayerData().getBoolean("PlayerData." + p.getUniqueId() + ".dismissed."
                                     + currentVersion.replace(".", "_"), false);
                     if (!isDismissed)
-                        plugin.getScheduler().runTaskLater(() -> {
+                                                SuperVanish.getScheduler().runTaskLater(() -> {
                           plugin.sendMessage(p, "RecreationRequiredMsg", p);
                         }, 1L);
                 }

@@ -34,9 +34,33 @@ import be.maximvdw.placeholderapi.PlaceholderAPI;
 public class PlaceholderConverter {
 
     private final SuperVanish plugin;
+    private final boolean placeholderAPIEnabled;
+    private final boolean mvdwPlaceholderAPIEnabled;
+    private final boolean essentialsEnabled;
+    private final boolean vaultEnabled;
+    private final Permission cachedPermAPI;
+    private final Chat cachedChatAPI;
+    private static final Pattern HEX_COLOR_PATTERN = Pattern.compile("\\{?&?#[a-fA-F0-9]{6}\\}?");
 
     public PlaceholderConverter(SuperVanish plugin) {
         this.plugin = plugin;
+        this.placeholderAPIEnabled = Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")
+                && plugin.getSettings().getBoolean("HookOptions.EnablePlaceholderAPIHook", true);
+        this.mvdwPlaceholderAPIEnabled = Bukkit.getPluginManager().isPluginEnabled("MVdWPlaceholderAPI")
+                && plugin.getSettings().getBoolean("HookOptions.EnableMVdWPlaceholderAPIHook", true);
+        this.essentialsEnabled = Bukkit.getPluginManager().isPluginEnabled("Essentials");
+        this.vaultEnabled = Bukkit.getPluginManager().isPluginEnabled("Vault");
+        if (vaultEnabled) {
+            RegisteredServiceProvider<Permission> permService = plugin.getServer()
+                .getServicesManager().getRegistration(Permission.class);
+            RegisteredServiceProvider<Chat> chatService = plugin.getServer()
+                .getServicesManager().getRegistration(Chat.class);
+            this.cachedPermAPI = permService != null ? permService.getProvider() : null;
+            this.cachedChatAPI = chatService != null ? chatService.getProvider() : null;
+        } else {
+            this.cachedPermAPI = null;
+            this.cachedChatAPI = null;
+        }
     }
 
     public String replacePlaceholders(String msg, Object... additionalPlayerInfo) {
@@ -67,14 +91,12 @@ public class PlaceholderConverter {
                 // offline player
                 OfflinePlayer specifiedPlayer = (OfflinePlayer) unspecifiedPlayer;
                 // MVdWPlaceholderAPI
-                if (Bukkit.getPluginManager().isPluginEnabled("MVdWPlaceholderAPI")
-                        && plugin.getSettings().getBoolean("HookOptions.EnableMVdWPlaceholderAPIHook", true)) {
+                if (mvdwPlaceholderAPIEnabled) {
                     String replaced = PlaceholderAPI.replacePlaceholders(specifiedPlayer, msg);
                     msg = replaced == null ? msg : replaced;
                 }
                 // replace essentials nick names
-                if (Bukkit.getPluginManager()
-                        .getPlugin("Essentials") != null) {
+                if (essentialsEnabled) {
                     msg = msg.replace("%nick%", specifiedPlayer.getName());
                 }
                 // replace general variables
@@ -90,20 +112,18 @@ public class PlaceholderConverter {
                 // player
                 Player specifiedPlayer = (Player) unspecifiedPlayer;
                 // PlaceholderAPI
-                if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")
-                        && plugin.getSettings().getBoolean("HookOptions.EnablePlaceholderAPIHook", true)) {
+                if (placeholderAPIEnabled) {
                     String replaced = PlaceholderAPIHook.translatePlaceholders(msg, specifiedPlayer);
                     //noinspection ConstantConditions
                     msg = replaced == null ? msg : replaced;
                 }
                 // MVdWPlaceholderAPI
-                if (Bukkit.getPluginManager().isPluginEnabled("MVdWPlaceholderAPI")
-                        && plugin.getSettings().getBoolean("HookOptions.EnableMVdWPlaceholderAPIHook", true)) {
+                if (mvdwPlaceholderAPIEnabled) {
                     String replaced = PlaceholderAPI.replacePlaceholders(specifiedPlayer, msg);
                     msg = replaced == null ? msg : replaced;
                 }
                 // replace essentials nick names
-                if (Bukkit.getPluginManager().getPlugin("Essentials") != null) {
+                if (essentialsEnabled) {
                     Essentials ess = (Essentials) Bukkit.getServer()
                             .getPluginManager().getPlugin("Essentials");
                     User u = ess.getUser(specifiedPlayer);
@@ -112,13 +132,9 @@ public class PlaceholderConverter {
                             msg = msg.replace("%nick%", u.getNickname());
                 }
                 // replace vault info
-                if (Bukkit.getPluginManager().getPlugin("Vault") != null) {
-                    RegisteredServiceProvider<Permission> permService = plugin.getServer()
-                            .getServicesManager().getRegistration(Permission.class);
-                    RegisteredServiceProvider<Chat> chatService = plugin.getServer()
-                            .getServicesManager().getRegistration(Chat.class);
-                    Permission permAPI = permService != null ? permService.getProvider() : null;
-                    Chat chatAPI = chatService != null ? chatService.getProvider() : null;
+                if (vaultEnabled) {
+                    Permission permAPI = cachedPermAPI;
+                    Chat chatAPI = cachedChatAPI;
                     try {
                         if (permAPI != null) {
                             String group = permAPI.getPrimaryGroup(specifiedPlayer);
@@ -161,13 +177,19 @@ public class PlaceholderConverter {
         }
         // convert color codes
         if (plugin.getVersionUtil().isOneDotXOrHigher(16)) {
-            Pattern pattern = Pattern.compile("\\{?&?#[a-fA-F0-9]{6}\\}?");
-            Matcher matcher = pattern.matcher(msg);
-
+            Matcher matcher = HEX_COLOR_PATTERN.matcher(msg);
+            StringBuffer sb = null;
             while (matcher.find()) {
-                String color = msg.substring(matcher.start(), matcher.end());
-                msg = msg.replace(color, net.md_5.bungee.api.ChatColor.of(color.replace("&", "").replace("{", "").replace("}", "")) + "");
-                matcher = pattern.matcher(msg);
+                if (sb == null) sb = new StringBuffer();
+                String color = matcher.group();
+                String replacement = net.md_5.bungee.api.ChatColor
+                        .of(color.replace("&", "").replace("{", "").replace("}", ""))
+                        .toString();
+                matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+            }
+            if (sb != null) {
+                matcher.appendTail(sb);
+                msg = sb.toString();
             }
         }
         msg = ChatColor.translateAlternateColorCodes('&', msg);

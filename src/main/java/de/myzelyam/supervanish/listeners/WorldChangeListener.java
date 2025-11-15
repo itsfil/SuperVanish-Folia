@@ -29,6 +29,7 @@ public class WorldChangeListener implements Listener {
     public void onWorldChange(PlayerChangedWorldEvent e) {
         try {
             final Player p = e.getPlayer();
+            plugin.refreshCachedPermissionLevels(p);
             if (!plugin.getVanishStateMgr().isVanished(p.getUniqueId()))
                 return;
             // check auto-reappear option

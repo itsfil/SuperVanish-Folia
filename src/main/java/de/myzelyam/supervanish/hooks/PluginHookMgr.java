@@ -17,7 +17,7 @@ import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.Plugin;
 
-import java.util.HashMap;
+import ca.spottedleaf.concurrentutil.map.SWMRHashTable;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -25,17 +25,19 @@ import java.util.logging.Level;
 
 public class PluginHookMgr implements Listener {
 
-    private static final Map<String, Class<? extends PluginHook>> REGISTERED_HOOKS
-            = new HashMap<String, Class<? extends PluginHook>>() {{
-        put("Essentials", EssentialsHook.class);
-        put("Citizens", CitizensHook.class);
-        put("PlaceholderAPI", PlaceholderAPIHook.class);
-        put("dynmap", DynmapHook.class);
-        put("TrailGUI", TrailGUIHook.class);
-        put("MVdWPlaceholderAPI", MVdWPlaceholderAPIHook.class);
-        put("OpenInv", OpenInvHook.class);
-        put("InvSeePlusPlus", InvseePlusPlusHook.class);
-    }};
+    private static final Map<String, Class<? extends PluginHook>> REGISTERED_HOOKS;
+    static {
+        Map<String, Class<? extends PluginHook>> m = new SWMRHashTable<>();
+        m.put("Essentials", EssentialsHook.class);
+        m.put("Citizens", CitizensHook.class);
+        m.put("PlaceholderAPI", PlaceholderAPIHook.class);
+        m.put("dynmap", DynmapHook.class);
+        m.put("TrailGUI", TrailGUIHook.class);
+        m.put("MVdWPlaceholderAPI", MVdWPlaceholderAPIHook.class);
+        m.put("OpenInv", OpenInvHook.class);
+        m.put("InvSeePlusPlus", InvseePlusPlusHook.class);
+        REGISTERED_HOOKS = java.util.Collections.unmodifiableMap(m);
+    }
     private final SuperVanish plugin;
     private Set<PluginHook> activeHooks = new HashSet<>();
 

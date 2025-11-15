@@ -8,10 +8,9 @@
 
 package de.myzelyam.supervanish.visibility.hiders;
 
-import com.google.common.collect.ImmutableSet;
-
 import de.myzelyam.supervanish.SuperVanish;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -22,12 +21,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import ca.spottedleaf.concurrentutil.map.SWMRHashTable;
 
 public abstract class PlayerHider implements Listener {
 
     protected final SuperVanish plugin;
-    protected final Map<Player, Set<Player>> playerHiddenFromPlayersMap = new ConcurrentHashMap<>();
+    protected final Map<UUID, Set<UUID>> playerHiddenFromPlayersMap = new SWMRHashTable<>();
 
     public PlayerHider(SuperVanish plugin) {
         this.plugin = plugin;
@@ -37,51 +36,47 @@ public abstract class PlayerHider implements Listener {
     public abstract String getName();
 
     public boolean isHidden(Player player, Player viewer) {
-        return !player.getUniqueId().equals(viewer.getUniqueId())
-                && playerHiddenFromPlayersMap.containsKey(player)
-                && playerHiddenFromPlayersMap.get(player).contains(viewer);
+        UUID pId = player.getUniqueId();
+        UUID vId = viewer.getUniqueId();
+        if (pId.equals(vId)) return false;
+        Set<UUID> set = playerHiddenFromPlayersMap.get(pId);
+        return set != null && set.contains(vId);
     }
 
     public boolean isHidden(UUID playerUUID, Player viewer) {
         if (playerUUID.equals(viewer.getUniqueId())) return false;
-        for (Player p : playerHiddenFromPlayersMap.keySet()) {
-            if (p.getUniqueId().equals(playerUUID)) {
-                return playerHiddenFromPlayersMap.get(p).contains(viewer);
-            }
-        }
-        return false;
+        Set<UUID> set = playerHiddenFromPlayersMap.get(playerUUID);
+        return set != null && set.contains(viewer.getUniqueId());
     }
 
     public boolean isHidden(String playerName, Player viewer) {
         if (playerName.equalsIgnoreCase(viewer.getName())) return false;
-        for (Player p : playerHiddenFromPlayersMap.keySet()) {
-            if (p.getName().equalsIgnoreCase(playerName)) {
-                return playerHiddenFromPlayersMap.get(p).contains(viewer);
-            }
-        }
-        return false;
+        Player target = Bukkit.getPlayerExact(playerName);
+        return target != null && isHidden(target, viewer);
     }
 
     /**
      * @return TRUE if the operation changed the state, FALSE if it did not
      */
     public boolean setHidden(Player player, Player viewer, boolean hidden) {
-        if (!playerHiddenFromPlayersMap.containsKey(player))
-            playerHiddenFromPlayersMap.put(player, new HashSet<>());
-        if (viewer == player) return false;
-        Set<Player> hiddenFromPlayers = playerHiddenFromPlayersMap.get(player);
-        if (hidden && !hiddenFromPlayers.contains(viewer)) {
-            hiddenFromPlayers.add(viewer);
-            return true;
-        } else if (!hidden && hiddenFromPlayers.contains(viewer)) {
-            hiddenFromPlayers.remove(viewer);
-            return true;
+        UUID pId = player.getUniqueId();
+        UUID vId = viewer.getUniqueId();
+        if (pId.equals(vId)) return false;
+        Set<UUID> hiddenFromPlayers = playerHiddenFromPlayersMap.computeIfAbsent(pId, k -> new HashSet<>());
+        if (hidden) {
+            return hiddenFromPlayers.add(vId);
+        } else {
+            return hiddenFromPlayers.remove(vId);
         }
-        return false;
     }
 
     public Set<Player> getHiddenPlayerKeys() {
-        return playerHiddenFromPlayersMap.keySet();
+        Set<Player> result = new HashSet<>();
+        for (UUID id : playerHiddenFromPlayersMap.keySet()) {
+            Player p = Bukkit.getPlayer(id);
+            if (p != null) result.add(p);
+        }
+        return result;
     }
 
     private void registerQuitListener() {
@@ -89,17 +84,34 @@ public abstract class PlayerHider implements Listener {
 
             @EventHandler(priority = EventPriority.MONITOR)
             public void onQuit(final PlayerQuitEvent e) {
-                plugin.getScheduler().runTaskLater(() -> {
-                  playerHiddenFromPlayersMap.remove(e.getPlayer());
-                  for (Player p : ImmutableSet.copyOf(playerHiddenFromPlayersMap.keySet())) {
-                    playerHiddenFromPlayersMap.get(p).remove(e.getPlayer());
-                  }
+                SuperVanish.getScheduler().runTaskLater(() -> {
+                    UUID quitId = e.getPlayer().getUniqueId();
+                    playerHiddenFromPlayersMap.remove(quitId);
+                    for (UUID id : new java.util.ArrayList<>(playerHiddenFromPlayersMap.keySet())) {
+                        Set<UUID> set = playerHiddenFromPlayersMap.get(id);
+                        if (set != null) set.remove(quitId);
+                    }
                 }, 1L);
             }
         }, plugin);
     }
 
+    protected void forEachHiddenPair(java.util.function.BiConsumer<Player, Player> consumer) {
+        for (Map.Entry<UUID, Set<UUID>> entry : playerHiddenFromPlayersMap.entrySet()) {
+            Player hidden = Bukkit.getPlayer(entry.getKey());
+            if (hidden == null) continue;
+            for (UUID viewerId : entry.getValue()) {
+                Player viewer = Bukkit.getPlayer(viewerId);
+                if (viewer != null) consumer.accept(hidden, viewer);
+            }
+        }
+    }
+
     protected void runLater(Runnable runnable, long delay) {
         SuperVanish.getScheduler().runTaskLater(runnable, delay);
+    }
+
+    public void clearAll() {
+        playerHiddenFromPlayersMap.clear();
     }
 }
