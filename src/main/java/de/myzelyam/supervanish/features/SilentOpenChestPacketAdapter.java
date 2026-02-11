@@ -8,116 +8,83 @@
 
 package de.myzelyam.supervanish.features;
 
-import com.comphenix.protocol.events.ListenerPriority;
-import com.comphenix.protocol.events.PacketAdapter;
-import com.comphenix.protocol.events.PacketEvent;
-import com.comphenix.protocol.reflect.FieldAccessException;
-import com.comphenix.protocol.wrappers.EnumWrappers;
-import com.comphenix.protocol.wrappers.PlayerInfoData;
-import com.google.common.collect.ImmutableList;
-import org.bukkit.Bukkit;
+import net.minecraft.network.protocol.game.*;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.GameType;
+import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.comphenix.protocol.PacketType.Play.Server.*;
-
-/**
- * This is currently unused on Minecraft 1.19 or higher
- */
-public class SilentOpenChestPacketAdapter extends PacketAdapter {
+public class SilentOpenChestPacketAdapter {
 
     private final SilentOpenChest silentOpenChest;
 
-    private boolean suppressErrors = false;
-
     public SilentOpenChestPacketAdapter(SilentOpenChest silentOpenChest) {
-        super(silentOpenChest.plugin, ListenerPriority.LOW, PLAYER_INFO, ABILITIES,
-                ENTITY_METADATA);
         this.silentOpenChest = silentOpenChest;
     }
 
-    @Override
-    public void onPacketSending(PacketEvent event) {
-        if (silentOpenChest.plugin.getVanishStateMgr().getOnlineVanishedPlayers().isEmpty()) return;
+    public ClientboundPlayerInfoUpdatePacket handlePlayerInfo(Player receiver, ClientboundPlayerInfoUpdatePacket packet) {
+        if (silentOpenChest.plugin.getVanishStateMgr().getOnlineVanishedPlayers().isEmpty()) return packet;
+        
         try {
-            Player receiver = event.getPlayer();
-            if (receiver == null) return;
-            if (event.getPacketType() == PLAYER_INFO) {
-                // multiple events share same packet object
-                event.setPacket(event.getPacket().shallowClone());
-
-                List<PlayerInfoData> infoDataList = new ArrayList<>(
-                        event.getPacket().getPlayerInfoDataLists().read(0));
-                for (PlayerInfoData infoData : ImmutableList.copyOf(infoDataList)) {
-                    if (!silentOpenChest.plugin.getVisibilityChanger().getHider()
-                            .isHidden(infoData.getProfile().getUUID(), receiver)
-                            && silentOpenChest.plugin.getVanishStateMgr()
-                            .isVanished(infoData.getProfile().getUUID())) {
-                        Player vanishedTabPlayer = Bukkit.getPlayer(infoData.getProfile().getUUID());
-                        if (infoData.getGameMode() == EnumWrappers.NativeGameMode.SPECTATOR
-                                && silentOpenChest.hasSilentlyOpenedChest(vanishedTabPlayer)
-                                && event.getPacket().getPlayerInfoAction().read(0)
-                                == EnumWrappers.PlayerInfoAction.UPDATE_GAME_MODE) {
-                            int latency;
-                            try {
-                                latency = infoData.getLatency();
-                            } catch (NoSuchMethodError e) {
-                                latency = 21;
+            var entries = packet.entries();
+            var modifiedEntries = entries.stream()
+                    .map(entry -> {
+                        if (!silentOpenChest.plugin.getVisibilityChanger().getHider()
+                                .isHidden(entry.profileId(), receiver)
+                                && silentOpenChest.plugin.getVanishStateMgr()
+                                .isVanished(entry.profileId())) {
+                            Player vanishedPlayer = silentOpenChest.plugin.getServer().getPlayer(entry.profileId());
+                            if (vanishedPlayer != null) {
+                                ServerPlayer nmsPlayer = ((CraftPlayer) vanishedPlayer).getHandle();
+                                if (nmsPlayer.gameMode.getGameModeForPlayer() == GameType.SPECTATOR
+                                        && silentOpenChest.hasSilentlyOpenedChest(vanishedPlayer)) {
+                                    return new ClientboundPlayerInfoUpdatePacket.Entry(
+                                            entry.profileId(),
+                                            entry.profile(),
+                                            entry.listed(),
+                                            entry.latency(),
+                                            GameType.SURVIVAL,
+                                            entry.displayName(),
+                                            entry.listed(),
+                                            0,
+                                            entry.chatSession()
+                                    );
+                                }
                             }
-                            PlayerInfoData newData = new PlayerInfoData(infoData.getProfile(),
-                                    latency, EnumWrappers.NativeGameMode.SURVIVAL,
-                                    infoData.getDisplayName());
-                            infoDataList.remove(infoData);
-                            infoDataList.add(newData);
                         }
-                    }
-                }
-                event.getPacket().getPlayerInfoDataLists().write(0, infoDataList);
-            } else if (event.getPacketType() == GAME_STATE_CHANGE) {
-                // Currently unused due to ProtocolLib class loading bug
-                if (silentOpenChest.plugin.getVanishStateMgr().isVanished(
-                        receiver.getUniqueId())) {
-                    try {
-                        if (event.getPacket().getIntegers().read(0) != 3) return;
-                    } catch (FieldAccessException e) {
-                        return;
-                    }
-                    if (!silentOpenChest.hasSilentlyOpenedChest(receiver)) return;
-                    event.setCancelled(true);
-                }
-            } else if (event.getPacketType() == ABILITIES) {
-                if (silentOpenChest.plugin.getVanishStateMgr().isVanished(
-                        receiver.getUniqueId())) {
-                    if (!silentOpenChest.hasSilentlyOpenedChest(receiver)) return;
-                    event.setCancelled(true);
-                }
-            } else if (event.getPacketType() == ENTITY_METADATA) {
-                int entityID = event.getPacket().getIntegers().read(0);
-                if (entityID == receiver.getEntityId()) {
-                    if (silentOpenChest.plugin.getVanishStateMgr().isVanished(
-                            receiver.getUniqueId())) {
-                        if (!silentOpenChest.hasSilentlyOpenedChest(receiver)) return;
-                        event.setCancelled(true);
-                    }
-                }
-            }
-        } catch (Exception | NoClassDefFoundError e) {
-            if (!suppressErrors) {
-                if (e.getMessage() == null
-                        || !e.getMessage().endsWith("is not supported for temporary players.")) {
-                    silentOpenChest.plugin.logException(e);
-                    silentOpenChest.plugin.getLogger().warning("IMPORTANT: Please make sure that you are using the latest " +
-                            "dev-build of ProtocolLib and that your server is up-to-date! This error likely " +
-                            "happened inside of ProtocolLib code which is out of SuperVanish's control. It's part " +
-                            "of an optional feature module and can be removed safely by disabling " +
-                            "OpenChestsSilently in the config file. Please report this " +
-                            "error if you can reproduce it on an up-to-date server with only latest " +
-                            "ProtocolLib and latest SV installed.");
-                    suppressErrors = true;
-                }
+                        return entry;
+                    })
+                    .toList();
+            
+            return new ClientboundPlayerInfoUpdatePacket(packet.actions(), modifiedEntries);
+        } catch (Exception e) {
+            silentOpenChest.plugin.logException(e);
+        }
+        return packet;
+    }
+
+    public ClientboundPlayerAbilitiesPacket handleAbilities(Player receiver, ClientboundPlayerAbilitiesPacket packet) {
+        if (silentOpenChest.plugin.getVanishStateMgr().isVanished(receiver.getUniqueId())) {
+            if (silentOpenChest.hasSilentlyOpenedChest(receiver)) {
+                return null;
             }
         }
+        return packet;
+    }
+
+    public ClientboundSetEntityDataPacket handleEntityMetadata(Player receiver, ClientboundSetEntityDataPacket packet) {
+        try {
+            int entityId = packet.id();
+            if (entityId == receiver.getEntityId()) {
+                if (silentOpenChest.plugin.getVanishStateMgr().isVanished(receiver.getUniqueId())) {
+                    if (silentOpenChest.hasSilentlyOpenedChest(receiver)) {
+                        return null;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            silentOpenChest.plugin.logException(e);
+        }
+        return packet;
     }
 }

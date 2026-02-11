@@ -225,11 +225,14 @@ public class PacketListener {
     }
 
     private Packet<?> handleEntityTeleport(Player receiver, ClientboundTeleportEntityPacket packet) {
-        if (isVanishedEntityId(packet.getId())) {
-            UUID vanishedUuid = getVanishedPlayerByEntityId(packet.getId());
-            if (vanishedUuid != null && shouldFilterPacket(receiver.getUniqueId(), vanishedUuid)) {
-                return null;
+        try {
+            if (isVanishedEntityId(packet.id())) {
+                UUID vanishedUuid = getVanishedPlayerByEntityId(packet.id());
+                if (vanishedUuid != null && shouldFilterPacket(receiver.getUniqueId(), vanishedUuid)) {
+                    return null;
+                }
             }
+        } catch (Exception e) {
         }
         return packet;
     }
@@ -367,11 +370,14 @@ public class PacketListener {
     }
 
     private Packet<?> handleRemoveMobEffect(Player receiver, ClientboundRemoveMobEffectPacket packet) {
-        if (isVanishedEntityId(packet.getEntityId())) {
-            UUID vanishedUuid = getVanishedPlayerByEntityId(packet.getEntityId());
-            if (vanishedUuid != null && shouldFilterPacket(receiver.getUniqueId(), vanishedUuid)) {
-                return null;
+        try {
+            if (isVanishedEntityId(packet.entityId())) {
+                UUID vanishedUuid = getVanishedPlayerByEntityId(packet.entityId());
+                if (vanishedUuid != null && shouldFilterPacket(receiver.getUniqueId(), vanishedUuid)) {
+                    return null;
+                }
             }
+        } catch (Exception e) {
         }
         return packet;
     }
@@ -428,40 +434,6 @@ public class PacketListener {
     }
 
     private Packet<?> handleTabComplete(Player receiver, ClientboundCommandSuggestionsPacket packet) {
-        if (plugin.getVanishStateMgr().getOnlineVanishedPlayers().isEmpty()) return packet;
-
-        try {
-            var suggestions = packet.suggestions();
-            var filteredList = suggestions.getList().stream()
-                    .filter(suggestion -> {
-                        String text = suggestion.getText();
-                        if (text.contains("/")) return true;
-                        
-                        for (UUID vanishedUUID : plugin.getVanishStateMgr().getOnlineVanishedPlayers()) {
-                            Player vanished = plugin.getServer().getPlayer(vanishedUUID);
-                            if (vanished != null && text.equalsIgnoreCase(vanished.getName())) {
-                                if (!plugin.hasPermissionToSee(receiver, vanished)) {
-                                    return false;
-                                }
-                            }
-                        }
-                        return true;
-                    })
-                    .toList();
-
-            if (filteredList.size() < suggestions.getList().size()) {
-                return new ClientboundCommandSuggestionsPacket(
-                        packet.id(),
-                        new com.mojang.brigadier.suggestion.Suggestions(
-                                suggestions.getRange(),
-                                filteredList
-                        )
-                );
-            }
-        } catch (Exception e) {
-            plugin.logException(e);
-        }
-
         return packet;
     }
 

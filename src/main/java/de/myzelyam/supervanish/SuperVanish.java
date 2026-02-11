@@ -22,6 +22,7 @@ import de.myzelyam.supervanish.utils.VersionUtil;
 import de.myzelyam.supervanish.visibility.ActionBarMgr;
 import de.myzelyam.supervanish.visibility.FileVanishStateMgr;
 import de.myzelyam.supervanish.visibility.PaperServerPingListener;
+import de.myzelyam.supervanish.visibility.ServerListPacketListener;
 import de.myzelyam.supervanish.visibility.VisibilityChanger;
 import de.myzelyam.supervanish.visibility.hiders.PreventionHider;
 import de.myzelyam.supervanish.visibility.nms.PacketListener;
@@ -110,8 +111,8 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
             visibilityChanger = new VisibilityChanger(new PreventionHider(this), this);
             if (versionUtil.isOneDotXOrHigher(8))
                 actionBarMgr = new ActionBarMgr(this);
-            if (PaperServerPingListener.isEnabled(this))
-                getServer().getPluginManager().registerEvents(new PaperServerPingListener(this), this);
+            if (ServerListPacketListener.isEnabled(this))
+                ServerListPacketListener.register(this);
             if (ServerListPacketHandler.isEnabled(this))
                 getServer().getPluginManager().registerEvents(new ServerListPacketHandler(this), this);
             packetListener = new PacketListener(this);
