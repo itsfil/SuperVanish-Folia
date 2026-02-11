@@ -38,6 +38,14 @@ InvisibilityFeatures:
   PreventRaidTriggering: true
   # Should vanished players be unable to make mobs spawn? (paper only)
   PreventMobSpawning: true
+  # Should projectiles pass through vanished players (arrows, tridents, snowballs, etc)?
+  ProjectilePassThrough: true
+  # Should vanished players have zero collision with entities and vehicles?
+  ZeroCollision: true
+  # Should mobs completely ignore vanished players (no targeting, no aggression)?
+  MobIgnorance: true
+  # Should vanished players be surrounded by an invisible physical barrier?
+  PhysicalBarrier: false
 
   Fly:
     # Should invisible players be able to fly even if they aren't in creative/spectator mode?
@@ -103,6 +111,9 @@ MessageOptions:
 
   # Should SV hide the real join/leave messages of invisible players?
   HideRealJoinQuitMessages: true
+  # Should SV use native language translation packets for fake join/quit messages?
+  # This makes messages appear in the client's language (e.g., German clients see German text)
+  UseNativeLanguageMessages: true
   # Should SV hide the advancement messages of invisible players (only send it to the player)? (paper only)
   HideAdvancementMessages: true
   # Should SV hide leave messages for invisible players if 'VanishStateFeatures->ReappearOnQuit' is turned on?

@@ -34,7 +34,11 @@ public class QuitListener implements EventExecutor, Listener {
                 PlayerQuitEvent e = (PlayerQuitEvent) event;
                 FileConfiguration config = plugin.getConfig();
                 Player p = e.getPlayer();
-                // if is invisible
+                
+                if (plugin.getPacketListener() != null) {
+                    plugin.getPacketListener().uninjectPlayer(p);
+                }
+                
                 if (plugin.getVanishStateMgr().isVanished(p.getUniqueId())) {
                     // remove action bar
                     if (plugin.getActionBarMgr() != null && plugin.getSettings().getBoolean(

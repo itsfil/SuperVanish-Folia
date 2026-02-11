@@ -24,6 +24,8 @@ import de.myzelyam.supervanish.visibility.FileVanishStateMgr;
 import de.myzelyam.supervanish.visibility.PaperServerPingListener;
 import de.myzelyam.supervanish.visibility.VisibilityChanger;
 import de.myzelyam.supervanish.visibility.hiders.PreventionHider;
+import de.myzelyam.supervanish.visibility.nms.PacketListener;
+import de.myzelyam.supervanish.visibility.nms.ServerListPacketHandler;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -87,6 +89,8 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
     private LayeredPermissionChecker layeredPermissionChecker;
     @Getter
     private PluginHookMgr pluginHookMgr;
+    @Getter
+    private PacketListener packetListener;
     private final Map<UUID, VanishPlayer> vanishPlayers = new SWMRHashTable<>();
     private static TaskScheduler scheduler;
 
@@ -108,6 +112,12 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
                 actionBarMgr = new ActionBarMgr(this);
             if (PaperServerPingListener.isEnabled(this))
                 getServer().getPluginManager().registerEvents(new PaperServerPingListener(this), this);
+            if (ServerListPacketHandler.isEnabled(this))
+                getServer().getPluginManager().registerEvents(new ServerListPacketHandler(this), this);
+            packetListener = new PacketListener(this);
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                packetListener.injectPlayer(online);
+            }
             registerEvents();
             pluginHookMgr = new PluginHookMgr(this);
             featureMgr = new FeatureMgr(this);
@@ -130,6 +140,9 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
     @Override
     public void onDisable() {
         try {
+            if (packetListener != null) {
+                packetListener.uninjectAll();
+            }
             if (featureMgr != null) featureMgr.disableFeatures();
             if (visibilityChanger != null && visibilityChanger.getHider() != null) {
                 visibilityChanger.getHider().clearAll();

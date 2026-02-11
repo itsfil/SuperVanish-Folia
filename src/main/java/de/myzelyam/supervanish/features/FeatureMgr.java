@@ -27,8 +27,7 @@ import lombok.Data;
 
 public class FeatureMgr {
 
-    private static final Requirement<FeatureInfo> protocolLibInstalled = featureInfo -> Bukkit.getPluginManager().isPluginEnabled("ProtocolLib"),
-            oneDotEightOrHigher = featureInfo -> featureInfo.getPlugin().getVersionUtil().isOneDotXOrHigher(8),
+    private static final Requirement<FeatureInfo> oneDotEightOrHigher = featureInfo -> featureInfo.getPlugin().getVersionUtil().isOneDotXOrHigher(8),
             oneDotSeventeenOrHigher = featureInfo -> featureInfo.getPlugin().getVersionUtil().isOneDotXOrHigher(17),
             supportedServer = featureInfo -> Bukkit.getServer().getName().equals("Paper") || Bukkit.getServer().getName().equals("Purpur");
     private final Map<String, FeatureInfo> registeredFeatures = new SWMRHashTable<>();
@@ -38,11 +37,11 @@ public class FeatureMgr {
     public FeatureMgr(SuperVanish plugin) {
         this.plugin = plugin;
         registeredFeatures.put("SilentOpenChest", new FeatureInfo(SilentOpenChest.class, plugin,
-                Arrays.asList(protocolLibInstalled, oneDotEightOrHigher)));
+                Collections.singletonList(oneDotEightOrHigher)));
         registeredFeatures.put("NightVision", new FeatureInfo(NightVision.class, plugin,
-                Arrays.asList(protocolLibInstalled, oneDotEightOrHigher)));
+                Collections.singletonList(oneDotEightOrHigher)));
         registeredFeatures.put("VanishIndication", new FeatureInfo(VanishIndication.class, plugin,
-                Arrays.asList(protocolLibInstalled, oneDotEightOrHigher)));
+                Collections.singletonList(oneDotEightOrHigher)));
         registeredFeatures.put("Broadcast", new FeatureInfo(Broadcast.class, plugin));
         registeredFeatures.put("NoSculkSensorDetection", new FeatureInfo(NoSculkSensorDetection.class, plugin,
                 Collections.singletonList(oneDotSeventeenOrHigher)));
@@ -56,6 +55,12 @@ public class FeatureMgr {
             Collections.singletonList(supportedServer)));
         registeredFeatures.put("HideAdvancementMessages", new FeatureInfo(HideAdvancementMessages.class, plugin,
             Collections.singletonList(supportedServer)));
+        registeredFeatures.put("ProjectilePassThrough", new FeatureInfo(ProjectilePassThrough.class, plugin));
+        registeredFeatures.put("ZeroCollision", new FeatureInfo(ZeroCollision.class, plugin));
+        registeredFeatures.put("MobIgnorance", new FeatureInfo(MobIgnorance.class, plugin));
+        registeredFeatures.put("NativeLanguageMessages", new FeatureInfo(NativeLanguageMessages.class, plugin));
+        registeredFeatures.put("NoPush", new FeatureInfo(NoPush.class, plugin));
+        registeredFeatures.put("PhysicalBarrier", new FeatureInfo(PhysicalBarrier.class, plugin));
     }
 
     public void enableFeatures() {

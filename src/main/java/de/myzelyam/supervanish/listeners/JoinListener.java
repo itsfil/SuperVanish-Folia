@@ -97,6 +97,9 @@ public class JoinListener implements EventExecutor, Listener {
                         }, 1L);
                 }
             }
+            if (plugin.getPacketListener() != null) {
+                plugin.getPacketListener().injectPlayer(p);
+            }
         } catch (Exception er) {
             plugin.logException(er);
         }
