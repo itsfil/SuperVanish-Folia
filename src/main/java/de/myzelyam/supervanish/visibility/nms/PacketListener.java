@@ -131,6 +131,8 @@ public class PacketListener {
             return handleTabComplete(receiver, (ClientboundCommandSuggestionsPacket) packet);
         } else if (packet instanceof ClientboundPlayerInfoUpdatePacket) {
             return handlePlayerInfo(receiver, (ClientboundPlayerInfoUpdatePacket) packet);
+        } else if (packet instanceof ClientboundPlayerInfoRemovePacket) {
+            return handlePlayerInfoRemove(receiver, (ClientboundPlayerInfoRemovePacket) packet);
         } else if (packet instanceof ClientboundAddEntityPacket) {
             return handleEntitySpawn(receiver, (ClientboundAddEntityPacket) packet);
         } else if (packet instanceof ClientboundSetEntityDataPacket) {
@@ -165,6 +167,18 @@ public class PacketListener {
             return handleEntityPassengers(receiver, (ClientboundSetPassengersPacket) packet);
         } else if (packet instanceof ClientboundDamageEventPacket) {
             return handleDamageEvent(receiver, (ClientboundDamageEventPacket) packet);
+        } else if (packet instanceof ClientboundBossEventPacket) {
+            return handleBossBar(receiver, (ClientboundBossEventPacket) packet);
+        } else if (packet instanceof ClientboundSetPlayerTeamPacket) {
+            return handleTeam(receiver, (ClientboundSetPlayerTeamPacket) packet);
+        } else if (packet instanceof ClientboundRemoveEntitiesPacket) {
+            return handleRemoveEntities(receiver, (ClientboundRemoveEntitiesPacket) packet);
+        } else if (packet instanceof ClientboundSetScorePacket) {
+            return handleSetScore(receiver, (ClientboundSetScorePacket) packet);
+        } else if (packet instanceof ClientboundSetEntityMotionPacket) {
+            return handleEntityVelocity(receiver, (ClientboundSetEntityMotionPacket) packet);
+        } else if (packet instanceof ClientboundSetExperiencePacket) {
+            return handleExperience(receiver, (ClientboundSetExperiencePacket) packet);
         }
         return packet;
     }
@@ -172,6 +186,10 @@ public class PacketListener {
     private boolean handleIncomingPacket(Player player, Packet<?> packet) {
         if (packet instanceof ServerboundInteractPacket) {
             return handleInteract(player, (ServerboundInteractPacket) packet);
+        } else if (packet instanceof ServerboundPlayerCommandPacket) {
+            return handlePlayerCommand(player, (ServerboundPlayerCommandPacket) packet);
+        } else if (packet instanceof ServerboundUseItemOnPacket) {
+            return handleUseItemOn(player, (ServerboundUseItemOnPacket) packet);
         }
         return true;
     }
@@ -188,6 +206,17 @@ public class PacketListener {
         } catch (Exception e) {
         }
         return true;
+    }
+
+    private boolean handlePlayerCommand(Player player, ServerboundPlayerCommandPacket packet) {
+        if (plugin.getVanishStateMgr().isVanished(player.getUniqueId())) {
+            return true;
+        }
+        return true;
+    }
+
+    private boolean handleUseItemOn(Player player, ServerboundUseItemOnPacket packet) {
+        return !plugin.getVanishStateMgr().isVanished(player.getUniqueId());
     }
 
     private Packet<?> handleEntitySpawn(Player receiver, ClientboundAddEntityPacket packet) {
@@ -434,6 +463,14 @@ public class PacketListener {
     }
 
     private Packet<?> handleTabComplete(Player receiver, ClientboundCommandSuggestionsPacket packet) {
+        if (plugin.getVanishStateMgr().getOnlineVanishedPlayers().isEmpty()) return packet;
+
+        try {
+            return packet;
+        } catch (Exception e) {
+            plugin.logException(e);
+        }
+
         return packet;
     }
 
@@ -459,6 +496,110 @@ public class PacketListener {
             plugin.logException(e);
         }
 
+        return packet;
+    }
+
+    private Packet<?> handlePlayerInfoRemove(Player receiver, ClientboundPlayerInfoRemovePacket packet) {
+        if (plugin.getVanishStateMgr().getOnlineVanishedPlayers().isEmpty()) return packet;
+
+        try {
+            var uuids = packet.profileIds();
+            var filteredUuids = uuids.stream()
+                    .filter(uuid -> {
+                        if (plugin.getVanishStateMgr().isVanished(uuid)) {
+                            Player vanished = plugin.getServer().getPlayer(uuid);
+                            return vanished != null && plugin.hasPermissionToSee(receiver, vanished);
+                        }
+                        return true;
+                    })
+                    .toList();
+
+            if (filteredUuids.size() < uuids.size()) {
+                return new ClientboundPlayerInfoRemovePacket(filteredUuids);
+            }
+        } catch (Exception e) {
+            plugin.logException(e);
+        }
+
+        return packet;
+    }
+
+    private Packet<?> handleBossBar(Player receiver, ClientboundBossEventPacket packet) {
+        return packet;
+    }
+
+    private Packet<?> handleTeam(Player receiver, ClientboundSetPlayerTeamPacket packet) {
+        if (plugin.getVanishStateMgr().getOnlineVanishedPlayers().isEmpty()) return packet;
+
+        try {
+            var playerNames = packet.getPlayers();
+            if (playerNames != null && !playerNames.isEmpty()) {
+                var filteredNames = playerNames.stream()
+                        .filter(name -> {
+                            Player vanished = plugin.getServer().getPlayer(name);
+                            if (vanished != null && plugin.getVanishStateMgr().isVanished(vanished.getUniqueId())) {
+                                return plugin.hasPermissionToSee(receiver, vanished);
+                            }
+                            return true;
+                        })
+                        .toList();
+
+                if (filteredNames.size() < playerNames.size()) {
+                    return null;
+                }
+            }
+        } catch (Exception e) {
+        }
+
+        return packet;
+    }
+
+    private Packet<?> handleRemoveEntities(Player receiver, ClientboundRemoveEntitiesPacket packet) {
+        try {
+            var entityIds = packet.getEntityIds();
+            for (int entityId : entityIds) {
+                if (isVanishedEntityId(entityId)) {
+                    entityIdToUuid.remove(entityId);
+                }
+            }
+        } catch (Exception e) {
+        }
+        return packet;
+    }
+
+    private Packet<?> handleSetScore(Player receiver, ClientboundSetScorePacket packet) {
+        if (plugin.getVanishStateMgr().getOnlineVanishedPlayers().isEmpty()) return packet;
+
+        try {
+            String ownerName = packet.owner();
+            if (ownerName != null) {
+                Player vanished = plugin.getServer().getPlayer(ownerName);
+                if (vanished != null && plugin.getVanishStateMgr().isVanished(vanished.getUniqueId())) {
+                    if (!plugin.hasPermissionToSee(receiver, vanished)) {
+                        return null;
+                    }
+                }
+            }
+        } catch (Exception e) {
+        }
+
+        return packet;
+    }
+
+    private Packet<?> handleEntityVelocity(Player receiver, ClientboundSetEntityMotionPacket packet) {
+        try {
+            if (isVanishedEntityId(packet.getId())) {
+                UUID vanishedUuid = getVanishedPlayerByEntityId(packet.getId());
+                if (vanishedUuid != null && shouldFilterPacket(receiver.getUniqueId(), vanishedUuid)) {
+                    return null;
+                }
+            }
+        } catch (Exception e) {
+        }
+        return packet;
+    }
+
+    private Packet<?> handleExperience(Player receiver, ClientboundSetExperiencePacket packet) {
         return packet;
     }
 
