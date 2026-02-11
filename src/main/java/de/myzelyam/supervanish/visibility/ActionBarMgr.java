@@ -8,12 +8,14 @@
 
 package de.myzelyam.supervanish.visibility;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bukkit.entity.Player;
+
 import de.myzelyam.supervanish.SuperVanish;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.entity.Player;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ActionBarMgr {
 

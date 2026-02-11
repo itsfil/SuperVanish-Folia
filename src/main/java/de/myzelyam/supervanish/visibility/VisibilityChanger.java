@@ -89,6 +89,10 @@ public class VisibilityChanger {
             }
             // sleep state
             player.setSleepingIgnored(true);
+            // track entity for advanced packet filtering
+            if (plugin.getPacketListener() != null) {
+                plugin.getPacketListener().trackVanishedPlayer(player);
+            }
             // chat message
             if (hiderName == null)
                 plugin.sendMessage(player, "OnVanish", player);
@@ -139,6 +143,10 @@ public class VisibilityChanger {
             }
             // sleep state
             player.setSleepingIgnored(false);
+            // untrack entity for advanced packet filtering
+            if (plugin.getPacketListener() != null) {
+                plugin.getPacketListener().untrackVanishedPlayer(player);
+            }
             // state
             plugin.getVanishStateMgr().setVanishedState(player.getUniqueId(),
                     player.getName(), false, showerName);

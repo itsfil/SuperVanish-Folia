@@ -1,4 +1,4 @@
-﻿package de.myzelyam.supervanish.features;
+package de.myzelyam.supervanish.features;
 
 import de.myzelyam.api.vanish.PlayerShowEvent;
 import de.myzelyam.api.vanish.PostPlayerHideEvent;
