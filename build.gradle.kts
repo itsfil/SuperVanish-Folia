@@ -35,7 +35,6 @@ repositories {
 
 dependencies {
     paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
-    implementation("com.github.Anon8281:UniversalScheduler:0.1.7")
     implementation("ca.spottedleaf:concurrentutil:0.0.3")
 
     compileOnly("org.projectlombok:lombok:1.18.38")
@@ -46,8 +45,6 @@ dependencies {
         exclude(group = "org.bukkit", module = "bukkit")
         exclude(group = "org.bstats", module = "bstats-bukkit")
     }
-
-    compileOnly("net.dmulloy2:ProtocolLib:5.4.0")
 
     compileOnly("com.github.MilkBowl:VaultAPI:1.7") {
         exclude(group = "org.bukkit", module = "bukkit")
@@ -92,11 +89,6 @@ tasks.processResources {
 
 tasks.shadowJar {
     archiveClassifier.set("")
-
-    relocate(
-        "com.github.Anon8281.universalScheduler",
-        "de.myzelyam.supervanish.universalScheduler"
-    )
 
     relocate(
         "ca.spottedleaf.concurrentutil",

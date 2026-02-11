@@ -2,11 +2,11 @@ package de.myzelyam.supervanish.hooks;
 
 import com.earth2me.essentials.Essentials;
 import com.earth2me.essentials.User;
-import com.github.Anon8281.universalScheduler.scheduling.tasks.MyScheduledTask;
 import de.myzelyam.api.vanish.PlayerHideEvent;
 import de.myzelyam.api.vanish.PostPlayerShowEvent;
 import de.myzelyam.supervanish.SuperVanish;
 import de.myzelyam.supervanish.commands.CommandAction;
+import de.myzelyam.supervanish.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -20,17 +20,11 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Hooks into Essentials plugin to sync vanish state.
- *
- * Copyright © 2015, Leon Mangler and the SuperVanish contributors
- * Licensed under MPL 2.0.
- */
 public class EssentialsHook extends PluginHook {
 
     private final Set<UUID> preVanishHiddenPlayers = new HashSet<>();
     private Essentials essentials;
-    private MyScheduledTask forcedInvisibilityTask;
+    private ScheduledTask forcedInvisibilityTask;
 
     public EssentialsHook(SuperVanish superVanish) {
         super(superVanish);

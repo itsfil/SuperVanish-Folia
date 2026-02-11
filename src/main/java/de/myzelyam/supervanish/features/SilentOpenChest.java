@@ -8,7 +8,6 @@
 
 package de.myzelyam.supervanish.features;
 
-import com.comphenix.protocol.ProtocolLibrary;
 import de.myzelyam.api.vanish.PlayerShowEvent;
 import de.myzelyam.supervanish.SuperVanish;
 import de.myzelyam.supervanish.hooks.OpenInvHook;
@@ -23,7 +22,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.*;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import ca.spottedleaf.concurrentutil.map.SWMRHashTable;
@@ -177,27 +175,21 @@ public class SilentOpenChest extends Feature {
         final Player p = (Player) e.getPlayer();
         final UUID id = p.getUniqueId();
         if (!playerStateInfoMap.containsKey(id)) return;
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                StateInfo stateInfo = playerStateInfoMap.get(id);
-                if (stateInfo == null) return;
-                restoreState(stateInfo, p);
-                playerStateInfoMap.remove(id);
-            }
-        }.runTaskLater(plugin, 1);
+        SuperVanish.getScheduler().runTaskLater(() -> {
+            StateInfo stateInfo = playerStateInfoMap.get(id);
+            if (stateInfo == null) return;
+            restoreState(stateInfo, p);
+            playerStateInfoMap.remove(id);
+        }, 1);
     }
 
     private void restoreState(StateInfo stateInfo, Player p) {
         p.setGameMode(stateInfo.gameMode);
         p.teleport(p.getLocation().add(0, 0.2, 0));
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                p.setAllowFlight(stateInfo.canFly);
-                p.setFlying(stateInfo.isFlying);
-            }
-        }.runTaskLater(plugin, 1);
+        SuperVanish.getScheduler().runTaskLater(() -> {
+            p.setAllowFlight(stateInfo.canFly);
+            p.setFlying(stateInfo.isFlying);
+        }, 1);
     }
 
     @Override
@@ -212,10 +204,6 @@ public class SilentOpenChest extends Feature {
 
     @Override
     public void onEnable() {
-        if (!plugin.getVersionUtil().isOneDotXOrHigher(19)) {
-            SilentOpenChestPacketAdapter packetAdapter = new SilentOpenChestPacketAdapter(this);
-            ProtocolLibrary.getProtocolManager().addPacketListener(packetAdapter);
-        }
     }
 
     private static class StateInfo {

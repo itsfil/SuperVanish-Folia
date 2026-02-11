@@ -7,7 +7,6 @@ api-version: 1.21
 website: https://www.spigotmc.org/resources/supervanish-be-invisible.1331/
 folia-supported: true
 softdepend:
-- ProtocolLib
 - LibsDisguises
 - DisguiseCraft
 - dynmap

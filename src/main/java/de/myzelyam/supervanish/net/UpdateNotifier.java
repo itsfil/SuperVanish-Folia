@@ -9,8 +9,7 @@
 package de.myzelyam.supervanish.net;
 
 import de.myzelyam.supervanish.SuperVanish;
-
-import com.github.Anon8281.universalScheduler.scheduling.tasks.MyScheduledTask;
+import de.myzelyam.supervanish.scheduler.ScheduledTask;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -32,11 +31,10 @@ import lombok.Getter;
 
 public class UpdateNotifier {
 
-    // 20 minutes
     private static final long CHECK_INTERVAL = 20 * 60 * 20;
 
     private final SuperVanish plugin;
-    private final MyScheduledTask checkTask;
+    private final ScheduledTask checkTask;
     @Getter
     private final String currentVersion;
     private final Set<UUID> notifiedPlayers = new HashSet<>();
@@ -93,7 +91,7 @@ public class UpdateNotifier {
         }
     }
 
-    private MyScheduledTask start() {
+    private ScheduledTask start() {
         if (checkTask != null) throw new IllegalStateException("Task is already running");
         return SuperVanish.getScheduler().runTaskTimerAsynchronously(() -> {
           String latestVersion = fetchLatestVersion();

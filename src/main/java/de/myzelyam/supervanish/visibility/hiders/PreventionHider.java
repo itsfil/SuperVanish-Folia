@@ -9,29 +9,18 @@
 package de.myzelyam.supervanish.visibility.hiders;
 
 import de.myzelyam.supervanish.SuperVanish;
+import de.myzelyam.supervanish.scheduler.ScheduledTask;
 import de.myzelyam.supervanish.utils.BukkitPlayerHidingUtil;
-import de.myzelyam.supervanish.visibility.hiders.modules.PlayerInfoModule;
-import de.myzelyam.supervanish.visibility.hiders.modules.TabCompleteModule;
 import org.bukkit.entity.Player;
 
 public class PreventionHider extends PlayerHider implements Runnable {
 
-    private int taskId;
+    private ScheduledTask task;
 
     public PreventionHider(SuperVanish plugin) {
         super(plugin);
         if (!BukkitPlayerHidingUtil.isNewPlayerHidingAPISupported(plugin)) {
-            taskId = plugin.getServer().getScheduler().runTaskTimer(plugin, this, 2, 2).getTaskId();
-        }
-        if (plugin.isUseProtocolLib() && plugin.getVersionUtil().isOneDotXOrHigher(8)
-                && !plugin.getVersionUtil().isOneDotXOrHigher(19)
-                && plugin.getSettings().getBoolean("InvisibilityFeatures.ModifyTablistPackets", true))
-            PlayerInfoModule.register(plugin, this);
-        if (plugin.isUseProtocolLib()
-                && plugin.getSettings().getBoolean("InvisibilityFeatures.ModifyTabCompletePackets", true)
-                && !plugin.getVersionUtil().isOneDotXOrHigher(21)) {
-            // Not supported anymore on 1.21 and above (ProtocolLib broken)
-            TabCompleteModule.register(plugin, this);
+            task = SuperVanish.getScheduler().runTaskTimer(this, 2, 2);
         }
     }
 
@@ -53,7 +42,10 @@ public class PreventionHider extends PlayerHider implements Runnable {
     @Override
     public void run() {
         if (BukkitPlayerHidingUtil.isNewPlayerHidingAPISupported(plugin)) {
-            plugin.getServer().getScheduler().cancelTask(taskId);
+            if (task != null) {
+                task.cancel();
+                task = null;
+            }
             return;
         }
         forEachHiddenPair((hidden, viewer) -> BukkitPlayerHidingUtil.hidePlayer(hidden, viewer, plugin));

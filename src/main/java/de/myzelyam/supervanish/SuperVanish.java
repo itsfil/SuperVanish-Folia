@@ -8,7 +8,6 @@
 
 package de.myzelyam.supervanish;
 
-import com.comphenix.protocol.ProtocolLibrary;
 import de.myzelyam.api.vanish.VanishAPI;
 import de.myzelyam.supervanish.commands.VanishCommand;
 import de.myzelyam.supervanish.config.ConfigMgr;
@@ -16,11 +15,13 @@ import de.myzelyam.supervanish.listeners.*;
 import de.myzelyam.supervanish.features.FeatureMgr;
 import de.myzelyam.supervanish.hooks.PluginHookMgr;
 import de.myzelyam.supervanish.net.UpdateNotifier;
+import de.myzelyam.supervanish.scheduler.SchedulerFactory;
+import de.myzelyam.supervanish.scheduler.TaskScheduler;
 import de.myzelyam.supervanish.utils.ExceptionLogger;
 import de.myzelyam.supervanish.utils.VersionUtil;
 import de.myzelyam.supervanish.visibility.ActionBarMgr;
 import de.myzelyam.supervanish.visibility.FileVanishStateMgr;
-import de.myzelyam.supervanish.visibility.ServerListPacketListener;
+import de.myzelyam.supervanish.visibility.PaperServerPingListener;
 import de.myzelyam.supervanish.visibility.VisibilityChanger;
 import de.myzelyam.supervanish.visibility.hiders.PreventionHider;
 import lombok.Getter;
@@ -37,9 +38,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import com.github.Anon8281.universalScheduler.UniversalScheduler;
-import com.github.Anon8281.universalScheduler.scheduling.schedulers.TaskScheduler;
 
 import java.util.List;
 import java.util.Map;
@@ -65,8 +63,6 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
             "6.2.17", "6.2.18", "6.2.19", "6.2.20", "6.2.21"
     };
 
-    @Getter
-    private boolean useProtocolLib;
     @Getter
     private ActionBarMgr actionBarMgr;
     @Getter
@@ -97,11 +93,7 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
     @Override
     public void onEnable() {
         try {
-            scheduler = UniversalScheduler.getScheduler(this);
-            useProtocolLib = getServer().getPluginManager().isPluginEnabled("ProtocolLib");
-            if (!useProtocolLib) log(Level.INFO,
-                    "Please install ProtocolLib to be able to use all SuperVanish features: " +
-                            "https://www.spigotmc.org/resources/protocollib.1997/");
+            scheduler = SchedulerFactory.create(this);
             configMgr = new ConfigMgr(this);
             configMgr.prepareFiles();
             placeholderConverter = new PlaceholderConverter(this);
@@ -112,10 +104,10 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
             if (getSettings().getBoolean("MiscellaneousOptions.UpdateChecker.Enable", true))
                 updateNotifier = new UpdateNotifier(this);
             visibilityChanger = new VisibilityChanger(new PreventionHider(this), this);
-            if (versionUtil.isOneDotXOrHigher(8) && useProtocolLib)
+            if (versionUtil.isOneDotXOrHigher(8))
                 actionBarMgr = new ActionBarMgr(this);
-            if (useProtocolLib && ServerListPacketListener.isEnabled(this))
-                ServerListPacketListener.register(this);
+            if (PaperServerPingListener.isEnabled(this))
+                getServer().getPluginManager().registerEvents(new PaperServerPingListener(this), this);
             registerEvents();
             pluginHookMgr = new PluginHookMgr(this);
             featureMgr = new FeatureMgr(this);
@@ -128,7 +120,6 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
         try {
             VanishAPI.setPlugin(this);
         } catch (NoSuchMethodError ignored) {
-            // API already loaded by other plugin
         }
     }
 
@@ -172,10 +163,8 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
     }
 
     public void reload() {
-        getServer().getScheduler().cancelTasks(this);
+        scheduler.cancelAllTasks();
         HandlerList.unregisterAll(this);
-        if (useProtocolLib)
-            ProtocolLibrary.getProtocolManager().removePacketListeners(this);
         onDisable();
         onEnable();
     }
