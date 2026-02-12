@@ -1,4 +1,4 @@
-rootProject.name = "SuperVanish"
+rootProject.name = "SuperVanish-Plus"
 
 pluginManagement {
   repositories {

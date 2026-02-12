@@ -28,6 +28,7 @@ import de.myzelyam.supervanish.visibility.hiders.PreventionHider;
 import de.myzelyam.supervanish.visibility.nms.PacketListener;
 import de.myzelyam.supervanish.visibility.nms.ServerListPacketHandler;
 import lombok.Getter;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -98,6 +99,10 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
     @Override
     public void onEnable() {
         try {
+            // Initialize bStats Metrics
+            int pluginId = 29495;
+            Metrics metrics = new Metrics(this, pluginId);
+
             scheduler = SchedulerFactory.create(this);
             configMgr = new ConfigMgr(this);
             configMgr.prepareFiles();

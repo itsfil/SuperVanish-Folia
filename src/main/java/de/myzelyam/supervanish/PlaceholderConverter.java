@@ -8,14 +8,10 @@
 
 package de.myzelyam.supervanish;
 
-import com.earth2me.essentials.Essentials;
-import com.earth2me.essentials.User;
-
-import de.myzelyam.supervanish.hooks.PlaceholderAPIHook;
-import de.myzelyam.supervanish.utils.Validation;
-
-import net.milkbowl.vault.chat.Chat;
-import net.milkbowl.vault.permission.Permission;
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -24,12 +20,14 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.earth2me.essentials.Essentials;
+import com.earth2me.essentials.User;
 
 import be.maximvdw.placeholderapi.PlaceholderAPI;
+import de.myzelyam.supervanish.hooks.PlaceholderAPIHook;
+import de.myzelyam.supervanish.utils.Validation;
+import net.milkbowl.vault.chat.Chat;
+import net.milkbowl.vault.permission.Permission;
 
 public class PlaceholderConverter {
 
@@ -103,7 +101,7 @@ public class PlaceholderConverter {
                 msg = msg.replace("%d%", specifiedPlayer.getName())
                         .replace("%p%", specifiedPlayer.getName())
                         .replace("%tab%", specifiedPlayer.getName());
-                // replace other player's name if possible
+                // replace other player's name if provided
                 msg = msg.replace("%other%", unspecifiedOtherPlayersName != null
                         ? unspecifiedOtherPlayersName : "UNKNOWN");
                 break replaceVariables;
@@ -159,7 +157,7 @@ public class PlaceholderConverter {
                         .replace("%p%", "" + specifiedPlayer.getName())
                         .replace("%tab%",
                                 "" + specifiedPlayer.getPlayerListName());
-                // replace other player's name if possible
+                // replace other player's name if provided
                 msg = msg.replace("%other%", unspecifiedOtherPlayersName != null
                         ? unspecifiedOtherPlayersName : "UNKNOWN");
 
@@ -170,7 +168,7 @@ public class PlaceholderConverter {
                 // replace general variables
                 msg = msg.replace("%d%", "Console").replace("%p%", "Console")
                         .replace("%tab%", "Console");
-                // replace other player's name if possible
+                // replace other player's name if provided
                 msg = msg.replace("%other%", unspecifiedOtherPlayersName != null
                         ? unspecifiedOtherPlayersName : "UNKNOWN");
             }

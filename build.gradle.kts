@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "de.myzelyam"
-version = "6.2.21"
+version = "6.3.1"
 
 java {
     toolchain {
@@ -35,7 +35,10 @@ repositories {
 
 dependencies {
     paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
-    implementation("ca.spottedleaf:concurrentutil:0.0.3")
+    implementation("ca.spottedleaf:concurrentutil:0.0.3") {
+        exclude(group = "it.unimi.dsi", module = "fastutil")
+    }
+    implementation("org.bstats:bstats-bukkit:3.1.0")
 
     compileOnly("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")
@@ -71,7 +74,7 @@ dependencies {
     compileOnly("me.clip:placeholderapi:2.11.6")
 
     // Brigadier
-    implementation("com.mojang:brigadier:1.0.18")
+    compileOnly("com.mojang:brigadier:1.0.18")
 
     // OpenInv
     compileOnly("com.github.Jikoo:OpenInv:5.1.12")
@@ -93,6 +96,10 @@ tasks.shadowJar {
     relocate(
         "ca.spottedleaf.concurrentutil",
         "de.myzelyam.supervanish.libs.concurrentutil"
+    )
+    relocate(
+        "org.bstats",
+        "de.myzelyam.supervanish.libs.bstats"
     )
 }
 
