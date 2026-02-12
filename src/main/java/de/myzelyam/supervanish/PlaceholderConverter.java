@@ -36,6 +36,7 @@ public class PlaceholderConverter {
     private final boolean mvdwPlaceholderAPIEnabled;
     private final boolean essentialsEnabled;
     private final boolean vaultEnabled;
+    private final Essentials cachedEssentials;
     private final Permission cachedPermAPI;
     private final Chat cachedChatAPI;
     private static final Pattern HEX_COLOR_PATTERN = Pattern.compile("\\{?&?#[a-fA-F0-9]{6}\\}?");
@@ -47,6 +48,7 @@ public class PlaceholderConverter {
         this.mvdwPlaceholderAPIEnabled = Bukkit.getPluginManager().isPluginEnabled("MVdWPlaceholderAPI")
                 && plugin.getSettings().getBoolean("HookOptions.EnableMVdWPlaceholderAPIHook", true);
         this.essentialsEnabled = Bukkit.getPluginManager().isPluginEnabled("Essentials");
+        this.cachedEssentials = essentialsEnabled ? (Essentials) Bukkit.getPluginManager().getPlugin("Essentials") : null;
         this.vaultEnabled = Bukkit.getPluginManager().isPluginEnabled("Vault");
         if (vaultEnabled) {
             RegisteredServiceProvider<Permission> permService = plugin.getServer()
@@ -121,10 +123,8 @@ public class PlaceholderConverter {
                     msg = replaced == null ? msg : replaced;
                 }
                 // replace essentials nick names
-                if (essentialsEnabled) {
-                    Essentials ess = (Essentials) Bukkit.getServer()
-                            .getPluginManager().getPlugin("Essentials");
-                    User u = ess.getUser(specifiedPlayer);
+                if (essentialsEnabled && cachedEssentials != null) {
+                    User u = cachedEssentials.getUser(specifiedPlayer);
                     if (u != null)
                         if (u.getNickname() != null)
                             msg = msg.replace("%nick%", u.getNickname());

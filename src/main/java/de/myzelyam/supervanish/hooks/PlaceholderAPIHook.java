@@ -8,15 +8,16 @@
 
 package de.myzelyam.supervanish.hooks;
 
-import de.myzelyam.supervanish.SuperVanish;
-import me.clip.placeholderapi.PlaceholderAPI;
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import java.util.Collection;
+import java.util.UUID;
+
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-import java.util.Collection;
-import java.util.UUID;
+import de.myzelyam.supervanish.SuperVanish;
+import me.clip.placeholderapi.PlaceholderAPI;
+import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 
 public class PlaceholderAPIHook extends PluginHook {
 
@@ -90,20 +91,20 @@ public class PlaceholderAPIHook extends PluginHook {
                         || id.equalsIgnoreCase("hiddenplayers")) {
                     Collection<UUID> onlineVanishedPlayers = superVanish.getVanishStateMgr()
                             .getOnlineVanishedPlayers();
-                    String playerListMessage = "";
+                    boolean hideInvisible = superVanish.getSettings().getBoolean(
+                            "IndicationFeatures.LayeredPermissions.HideInvisibleInCommands", false);
+                    StringBuilder playerListMessage = new StringBuilder();
                     for (UUID uuid : onlineVanishedPlayers) {
                         Player onlineVanished = Bukkit.getPlayer(uuid);
                         if (onlineVanished == null) continue;
-                        if (superVanish.getSettings().getBoolean(
-                                "IndicationFeatures.LayeredPermissions.HideInvisibleInCommands", false)
-                                && !superVanish.hasPermissionToSee(p, onlineVanished)) {
+                        if (hideInvisible && !superVanish.hasPermissionToSee(p, onlineVanished)) {
                             continue;
                         }
-                        playerListMessage = playerListMessage + onlineVanished.getName() + ", ";
+                        playerListMessage.append(onlineVanished.getName()).append(", ");
                     }
                     return playerListMessage.length() > 3
                             ? playerListMessage.substring(0, playerListMessage.length() - 2)
-                            : playerListMessage;
+                            : playerListMessage.toString();
                 }
                 if (id.equalsIgnoreCase("playercount")
                         || id.equalsIgnoreCase("onlineplayers")) {
@@ -114,7 +115,7 @@ public class PlaceholderAPIHook extends PluginHook {
                         if (onlineVanished == null) continue;
                         if (p == null || !superVanish.canSee(p, onlineVanished)) playercount--;
                     }
-                    return playercount + "";
+                    return String.valueOf(playercount);
                 }
             } catch (Exception e) {
                 superVanish.logException(e);

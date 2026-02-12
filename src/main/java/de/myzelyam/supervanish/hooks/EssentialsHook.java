@@ -1,12 +1,10 @@
 package de.myzelyam.supervanish.hooks;
 
-import com.earth2me.essentials.Essentials;
-import com.earth2me.essentials.User;
-import de.myzelyam.api.vanish.PlayerHideEvent;
-import de.myzelyam.api.vanish.PostPlayerShowEvent;
-import de.myzelyam.supervanish.SuperVanish;
-import de.myzelyam.supervanish.commands.CommandAction;
-import de.myzelyam.supervanish.scheduler.ScheduledTask;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.UUID;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,10 +13,14 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.Plugin;
 
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
-import java.util.UUID;
+import com.earth2me.essentials.Essentials;
+import com.earth2me.essentials.User;
+
+import de.myzelyam.api.vanish.PlayerHideEvent;
+import de.myzelyam.api.vanish.PostPlayerShowEvent;
+import de.myzelyam.supervanish.SuperVanish;
+import de.myzelyam.supervanish.commands.CommandAction;
+import de.myzelyam.supervanish.scheduler.ScheduledTask;
 
 public class EssentialsHook extends PluginHook {
 
@@ -97,9 +99,9 @@ public class EssentialsHook extends PluginHook {
     public void onCommand(final PlayerCommandPreprocessEvent e) {
         if (!CommandAction.VANISH_SELF.checkPermission(e.getPlayer(), superVanish)) return;
         if (superVanish.getVanishStateMgr().isVanished(e.getPlayer().getUniqueId())) return;
-        String command = e.getMessage().toLowerCase(Locale.ENGLISH).split(" ")[0].replace("/", "")
-                .toLowerCase(Locale.ENGLISH);
-        if (command.split(":").length > 1) command = command.split(":")[1];
+        String command = e.getMessage().toLowerCase(Locale.ENGLISH).split(" ")[0].replace("/", "");
+        int colonIndex = command.indexOf(':');
+        if (colonIndex != -1) command = command.substring(colonIndex + 1);
         if (command.equals("supervanish") || command.equals("sv")
                 || command.equals("v") || command.equals("vanish")) {
             final User user = essentials.getUser(e.getPlayer());

@@ -36,7 +36,7 @@ public class Reload extends SubCommand {
                 return;
             }
             plugin.sendMessage(p, plugin.getMessage("PluginReloaded").replace("%time%",
-                    (System.currentTimeMillis() - before) + ""), p);
+                    String.valueOf(System.currentTimeMillis() - before)), p);
         }
     }
 }

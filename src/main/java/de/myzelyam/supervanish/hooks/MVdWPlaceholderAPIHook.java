@@ -8,17 +8,16 @@
 
 package de.myzelyam.supervanish.hooks;
 
-import de.myzelyam.supervanish.SuperVanish;
+import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
-import java.util.Collection;
-import java.util.ConcurrentModificationException;
-import java.util.UUID;
-
 import be.maximvdw.placeholderapi.PlaceholderAPI;
+import de.myzelyam.supervanish.SuperVanish;
 
 
 public class MVdWPlaceholderAPIHook extends PluginHook {
@@ -129,12 +128,12 @@ public class MVdWPlaceholderAPIHook extends PluginHook {
                             if (p == null || !superVanish.canSee(p, onlineVanished))
                                 playercount--;
                         }
-                        return playercount + "";
+                        return String.valueOf(playercount);
                     } catch (Throwable t) {
                         if (!(t instanceof NoClassDefFoundError || t instanceof
                                 ConcurrentModificationException))
                             superVanish.logException(t);
-                        return Bukkit.getOnlinePlayers().size() + "";
+                        return String.valueOf(Bukkit.getOnlinePlayers().size());
                     }
                 });
     }
